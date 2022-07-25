@@ -1,0 +1,11 @@
+.idea
+**/*.iml
+build
+node_modules
+node
+**/*.log
+target
+.git-cache
+docs/modules/*
+!docs/modules/ROOT
+!ui/build

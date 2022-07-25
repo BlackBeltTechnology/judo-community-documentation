@@ -1,0 +1,22 @@
+{
+  "name": "judo-community-docs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "install": "node post-install.js",
+    "build-ui": "cd ui && npm install && npm run build",
+    "generate": "npm run antora antora-playbook.yml",
+    "antora": "DOCSEARCH_ENABLED=true DOCSEARCH_ENGINE=lunr antora"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@antora/cli": "2.3",
+    "@antora/site-generator-default": "2.3",
+    "antora-lunr": "0.8.0",
+    "asciidoctor-kroki": "0.14.0",
+    "fs-extra": "^10.0.0"
+  }
+}

@@ -1,0 +1,5 @@
+name: antora-ui-default
+title: Antora Default UI
+version: develop
+nav:
+- modules/ROOT/nav.adoc

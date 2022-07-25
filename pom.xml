@@ -1,0 +1,156 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>hu.blackbelt.judo</groupId>
+    <artifactId>judo-community-documentation</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>bundle</packaging>
+
+    <name>JUDO Community Documentation</name>
+    <description>Documentation for the JUDO Community Projects</description>
+
+    <properties>
+        <maven>3.8.3</maven>
+
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+
+        <git-cache-dir>${basedir}/target/.git-cache</git-cache-dir>
+        <git-host>git@github.com:BlackBeltTechnology</git-host>
+
+        <frontend-maven-plugin-version>1.12.0</frontend-maven-plugin-version>
+        <maven-resources-plugin-version>3.0.2</maven-resources-plugin-version>
+        <maven-bundle-plugin-version>5.1.2</maven-bundle-plugin-version>
+        <exec-maven-plugin-version>1.3.2</exec-maven-plugin-version>
+        <maven-antrun-plugin-version>1.8</maven-antrun-plugin-version>
+
+        <node-version>v14.18.1</node-version>
+        <npm-version>8.1.1</npm-version>
+
+        <judo-meta-jsl-version>1.0.0.20220725_154938_7924dd40_develop</judo-meta-jsl-version>
+    </properties>
+
+    <profiles>
+        <profile>
+            <id>clone-deps</id>
+            <activation>
+                <property>
+                    <name>clone</name>
+                </property>
+            </activation>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-scm-plugin</artifactId>
+                        <version>1.12.0</version>
+                        <configuration>
+                            <providerImplementations> 
+                                <git>git</git>
+                            </providerImplementations>
+                            <scmVersionType>tag</scmVersionType>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>download_judo_meta_jsl</id>
+                                <goals>
+                                    <goal>checkout</goal>
+                                </goals>
+                                <phase>generate-sources</phase>
+                                <configuration>
+                                    <checkoutDirectory>${git-cache-dir}/judo-meta-jsl</checkoutDirectory>
+                                    <connectionUrl>scm:git:${git-host}/judo-meta-jsl.git</connectionUrl>
+                                    <includes>
+                                        docs/**
+                                    </includes>
+                                    <scmVersion>v${judo-meta-jsl-version}</scmVersion>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${maven-resources-plugin-version}</version>
+                <executions>
+                    <execution>
+                        <id>copy-meta-jsl-resources</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/docs/modules/meta-jsl</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${git-cache-dir}/judo-meta-jsl/docs</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>${frontend-maven-plugin-version}</version>
+                <executions>
+                    <execution>
+                        <id>install node and npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <phase>validate</phase>
+                    </execution>
+                    <execution>
+                        <id>install dependencies</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <arguments>install</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate docs</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <arguments>run generate</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <nodeVersion>${node-version}</nodeVersion>
+                    <npmVersion>${npm-version}</npmVersion>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>${maven-bundle-plugin-version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <obrRepository>NONE</obrRepository>
+                    <instructions>
+                        <Web-ContextPath>judo-community-documentation</Web-ContextPath>
+                        <Include-Resource>
+                            /=${project.basedir}/build
+                        </Include-Resource>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

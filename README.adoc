@@ -1,0 +1,33 @@
+# JUDO Community Documentation
+
+*The build process does not work when ran inside git-submodules:*
+https://gitlab.com/antora/antora/-/issues/895
+
+_(Please check out the project separately)_
+
+## Build UI
+
+Every time we make changes in the UI sources, we need to build the package, and `git add ui/build/ -f` the new artifact!
+
+```bash
+cd ui
+# install only if you haven't done it recently / package.json didn't change
+npm install
+npm run build
+```
+
+> Certain Antora Modules are pulled in from different Git Repos
+
+## Build Documentation
+
+### Default way (implicit cloning git repo dependencies)
+
+```bash
+mvn clean install -Dclone
+```
+
+### If there are no changes in remotes
+
+```bash
+mvn clean install
+```

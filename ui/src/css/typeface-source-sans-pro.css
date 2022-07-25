@@ -1,0 +1,18 @@
+@font-face {
+  font-family: "SourceSansPro-Regular";
+  font-style: normal;
+  font-weight: 400;
+  src:
+    local("SourceSansPro"),
+    local("SourceSansPro-Regular"),
+    url(~typeface-source-sans-pro/files/source-sans-pro-400.woff) format("woff");
+}
+
+@font-face {
+  font-family: "SourceSansPro-Bold";
+  font-style: normal;
+  font-weight: 900;
+  src:
+    local("SourceSansPro-Bold"),
+    url(~typeface-source-sans-pro/files/source-sans-pro-900.woff) format("woff");
+}

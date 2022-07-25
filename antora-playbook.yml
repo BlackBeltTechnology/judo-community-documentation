@@ -1,0 +1,25 @@
+site:
+  title: JUDO Community
+  url: https://documentation-community.judo.technology
+  start_page: ROOT:getting-started/introduction.adoc
+
+content:
+  sources:
+  - url: .
+    branches: HEAD
+    start_path: docs
+
+ui:
+  bundle:
+    url: ./ui/build/ui-bundle.zip
+  supplemental_files: ./antora-lunr-ui
+
+output: 
+  clean: true
+  dir: ./build
+
+asciidoc:
+  attributes:
+    page-pagination: true
+  extensions:
+  - asciidoctor-kroki
