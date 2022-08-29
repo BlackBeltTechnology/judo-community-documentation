@@ -72,8 +72,8 @@ jobs:
           -Drevision=${{ steps.version.outputs.version }} \
           clean install
 
-      - name: Disable robots and crawlers
-        run: ./de-robot.sh
+#      - name: Disable robots and crawlers
+#        run: ./de-robot.sh
 
       - name: Auth
         uses: google-github-actions/auth@v0.4.0
