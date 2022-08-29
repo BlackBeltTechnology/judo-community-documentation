@@ -1,6 +1,6 @@
 site:
   title: JUDO Community
-  url: https://documentation-community.judo.technology
+  url: https://documentation.judo.technology
   start_page: ROOT:getting-started/introduction.adoc
 
 content:
