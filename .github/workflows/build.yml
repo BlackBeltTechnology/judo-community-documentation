@@ -88,11 +88,7 @@ jobs:
           destination: judo-community-documentation
 
       - name: set mainfile in bucket
-        uses: colpal/actions-gsutil@v1.0.0
-        env:
-          GCP_CREDENTIALS: ${{ secrets.JUDO_DOCUMENTATION_GCP }}
-        with:
-          args: web set -m index.html gs://judo-community-documentation
+        run: gsutil web set -m index.html gs://judo-community-documentation
 
       - name: Tag commit
         uses: tvdias/github-tagger@v0.0.1
