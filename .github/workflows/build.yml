@@ -87,11 +87,15 @@ jobs:
           parent: false
           destination: judo-community-documentation
 
+      - name: create-json
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: "gcp-token.json"
+          json: ${{ secrets.JUDO_DOCUMENTATION_GCP_JSON }}
+
       - name: set mainfile in bucket
         run: |-
-          echo "${{ secrets.JUDO_DOCUMENTATION_GCP_JSON }}" > /tmp/gcp-token.json
-          cat /tmp/gcp-token.json
-          gcloud auth activate-service-account --key-file=/tmp/gcp-token.json
+          gcloud auth activate-service-account --key-file=gcp-token.json
           gsutil web set -m index.html gs://judo-community-documentation
 
       - name: Tag commit
