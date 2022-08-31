@@ -91,7 +91,7 @@ jobs:
         uses: jsdaniell/create-json@1.1.2
         with:
           name: "gcp-token.json"
-          json: ${{ secrets.JUDO_DOCUMENTATION_GCP_JSON }}
+          json: ${{ secrets.JUDO_DOCUMENTATION_GCP }}
 
       - name: set mainfile in bucket
         run: |-
