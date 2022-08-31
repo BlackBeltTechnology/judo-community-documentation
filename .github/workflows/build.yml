@@ -90,6 +90,7 @@ jobs:
       - name: set mainfile in bucket
         run: |-
           echo ${{ secrets.JUDO_DOCUMENTATION_GCP }} > /tmp/gcp-token.json
+          cat /tmp/gcp-token.json
           gcloud auth activate-service-account --key-file=/tmp/gcp-token.json
           gsutil web set -m index.html gs://judo-community-documentation
 
