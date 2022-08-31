@@ -9,3 +9,4 @@ target
 docs/modules/*
 !docs/modules/ROOT
 !ui/build
+gcp-token.json
