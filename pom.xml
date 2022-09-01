@@ -26,7 +26,7 @@
         <node-version>v14.18.1</node-version>
         <npm-version>8.1.1</npm-version>
 
-        <judo-meta-jsl-version>1.0.0.20220725_154938_7924dd40_develop</judo-meta-jsl-version>
+        <judo-meta-jsl-version>1.0.0.20220831_132721_419979fa_develop</judo-meta-jsl-version>
     </properties>
 
     <profiles>
