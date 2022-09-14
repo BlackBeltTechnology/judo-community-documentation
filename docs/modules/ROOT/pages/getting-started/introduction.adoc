@@ -29,8 +29,7 @@ We, the developers of JUDO, firmly believe in the power of abstraction. To expre
 == Less code
 
 In the software industry, high-abstraction tools are now called low-code tools, because they require less (or low) code to create applications. Simply put, low-code development is a paradigm that uses models as the primary artifact of the development process, and the implementation is (semi-)automatically generated from the models. In most cases, models are created using graphical diagrams, drag-and-drop editing of boxes and playing with the connecting lines between them. 
-
-To use this idiom, JUDO is a low-code tool. But unlike other popular low-code platforms, JUDO is not a graphical design tool. It provides a text-based language, called JSL (JUDO Specification Language). The overall goal of JSL is to foster unambiguous and readable descriptions of applications. Because of the accuracy of JSL, models can be run, tested, and integrated into coding projects. It works with any Java backend platform, but specifically supports Spring, Spring Boot and OSGi.
+Bearing the above in mind, JUDO is a low-code tool. But unlike other popular low-code platforms, JUDO is not a graphical design tool. It provides a text-based language, called JSL (JUDO Specification Language). The overall goal of JSL is to foster unambiguous and readable descriptions of applications. Because of the accuracy of JSL, models can be run, tested, and integrated into coding projects. It works with any Java backend platform, but specifically supports Spring, Spring Boot and OSGi.
 
 What are the benefits of using plain text instead of drag and drop diagram design?
 
@@ -52,7 +51,7 @@ On the other hand enterprise applications are used to satisfy the needs of an or
 
 == Toolbox
 
-And last but not least, JUDO is not a platform, but a toolbox. A toolbox where developers can choose the tool they need and ignore the other. JUDO never forces you to change your design process or best practice, rather it gives you choices.
+Last but not least, JUDO is not a platform, but a toolbox. A toolbox where developers can choose the tool they need and ignore the others. JUDO never forces you to change your design process or best practice, rather it gives you choices.
 
 It is specifically designed for software developers who want to speed up their work and focus on business needs instead of typing glue codes and copying design patterns.
 
