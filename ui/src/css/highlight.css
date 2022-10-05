@@ -94,6 +94,7 @@ pre code.language-jsl .hljs-quote {
 }
 
 pre code.language-jsl .hljs-keyword,
+pre code.language-jsl .hljs-semicolon,
 pre code.language-jsl .hljs-selector-tag,
 pre code.language-jsl .hljs-subst {
   color: #7f0055;
