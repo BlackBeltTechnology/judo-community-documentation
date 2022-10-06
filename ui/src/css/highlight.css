@@ -84,3 +84,62 @@
 .hljs-strong {
   font-weight: var(--monospace-font-weight-bold);
 }
+
+/* JUDO JSL HIGHLIGHT START */
+
+pre code.language-jsl .hljs-comment,
+pre code.language-jsl .hljs-quote {
+  color: #998;
+  font-style: italic;
+}
+
+pre code.language-jsl .hljs-keyword,
+pre code.language-jsl .hljs-semicolon,
+pre code.language-jsl .hljs-selector-tag,
+pre code.language-jsl .hljs-subst {
+  color: #7f0055;
+  font-weight: var(--monospace-font-weight-bold);
+}
+
+pre code.language-jsl .hljs-number,
+pre code.language-jsl .hljs-literal,
+pre code.language-jsl .hljs-variable,
+pre code.language-jsl .hljs-template-variable,
+pre code.language-jsl .hljs-tag .hljs-attr {
+  color: #008080;
+}
+
+pre code.language-jsl .hljs-string,
+pre code.language-jsl .hljs-doctag {
+  color: #d14;
+}
+
+pre code.language-jsl .hljs-type,
+pre code.language-jsl .hljs-class .hljs-title {
+  color: #5ac66b;
+  font-weight: var(--monospace-font-weight-bold);
+}
+
+pre code.language-jsl .hljs-tag,
+pre code.language-jsl .hljs-name,
+pre code.language-jsl .hljs-attribute {
+  color: #000080;
+  font-weight: normal;
+}
+
+pre code.language-jsl .hljs-regexp,
+pre code.language-jsl .hljs-link {
+  color: #009926;
+}
+
+pre code.language-jsl .hljs-symbol,
+pre code.language-jsl .hljs-bullet {
+  color: #990073;
+}
+
+pre code.language-jsl .hljs-built_in,
+pre code.language-jsl .hljs-builtin-name {
+  color: #0086b3;
+}
+
+/* JUDO JSL HIGHLIGHT END */

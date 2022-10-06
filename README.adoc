@@ -16,9 +16,16 @@ npm install
 npm run build
 ```
 
-> Certain Antora Modules are pulled in from different Git Repos
+### Customize JSL Highlighting
+
+* ui/src/css/highlight.css
+* ui/src/js/vendor/highlight.bundle.js
+
+> UI rebuild is mandatory after making changes!
 
 ## Build Documentation
+
+> Certain Antora Modules are pulled in from different Git Repos
 
 ### Default way (implicit cloning git repo dependencies)
 
