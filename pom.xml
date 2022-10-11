@@ -14,84 +14,65 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
 
-        <git-cache-dir>${basedir}/target/.git-cache</git-cache-dir>
-        <git-host>git@github.com:BlackBeltTechnology</git-host>
-
         <frontend-maven-plugin-version>1.12.0</frontend-maven-plugin-version>
-        <maven-resources-plugin-version>3.0.2</maven-resources-plugin-version>
+        <maven-clean-plugin-version>3.2.0</maven-clean-plugin-version>
+        <maven-dependency-plugin-version>3.3.0</maven-dependency-plugin-version>
         <maven-bundle-plugin-version>5.1.2</maven-bundle-plugin-version>
-        <exec-maven-plugin-version>1.3.2</exec-maven-plugin-version>
-        <maven-antrun-plugin-version>1.8</maven-antrun-plugin-version>
 
         <node-version>v14.18.1</node-version>
         <npm-version>8.1.1</npm-version>
 
-        <judo-meta-jsl-version>1.0.1.20221002_212241_3efbf2f7_develop</judo-meta-jsl-version>
+        <judo-meta-jsl-version>1.0.1.20221011_160812_0e665e36_feature_JNG_4152_docs_as_maven_module</judo-meta-jsl-version>
     </properties>
 
-    <profiles>
-        <profile>
-            <id>clone-deps</id>
-            <activation>
-                <property>
-                    <name>clone</name>
-                </property>
-            </activation>
-
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-scm-plugin</artifactId>
-                        <version>1.12.0</version>
-                        <configuration>
-                            <providerImplementations> 
-                                <git>git</git>
-                            </providerImplementations>
-                            <scmVersionType>tag</scmVersionType>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>download_judo_meta_jsl</id>
-                                <goals>
-                                    <goal>checkout</goal>
-                                </goals>
-                                <phase>generate-sources</phase>
-                                <configuration>
-                                    <checkoutDirectory>${git-cache-dir}/judo-meta-jsl</checkoutDirectory>
-                                    <connectionUrl>scm:git:${git-host}/judo-meta-jsl.git</connectionUrl>
-                                    <includes>
-                                        docs/**
-                                    </includes>
-                                    <scmVersion>v${judo-meta-jsl-version}</scmVersion>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+    <dependencies>
+        <dependency>
+            <groupId>hu.blackbelt.judo.meta</groupId>
+            <artifactId>hu.blackbelt.judo.meta.jsl.docs</artifactId>
+            <version>${judo-meta-jsl-version}</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>${maven-resources-plugin-version}</version>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>${maven-clean-plugin-version}</version>
                 <executions>
                     <execution>
-                        <id>copy-meta-jsl-resources</id>
+                        <id>clean-meta-jsl</id>
+                        <phase>clean</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${basedir}/docs/modules/meta-jsl</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>${maven-dependency-plugin-version}</version>
+                <executions>
+                    <execution>
+                        <id>unpack</id>
                         <phase>generate-resources</phase>
                         <goals>
-                            <goal>copy-resources</goal>
+                            <goal>unpack</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${basedir}/docs/modules/meta-jsl</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${git-cache-dir}/judo-meta-jsl/docs</directory>
-                                </resource>
-                            </resources>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>hu.blackbelt.judo.meta</groupId>
+                                    <artifactId>hu.blackbelt.judo.meta.jsl.docs</artifactId>
+                                    <version>${judo-meta-jsl-version}</version>
+                                    <outputDirectory>${basedir}/docs/modules/meta-jsl</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
                         </configuration>
                     </execution>
                 </executions>
