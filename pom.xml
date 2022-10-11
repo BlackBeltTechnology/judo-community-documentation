@@ -59,7 +59,7 @@
                 <version>${maven-dependency-plugin-version}</version>
                 <executions>
                     <execution>
-                        <id>unpack</id>
+                        <id>unpack-meta-jsl</id>
                         <phase>generate-resources</phase>
                         <goals>
                             <goal>unpack</goal>
