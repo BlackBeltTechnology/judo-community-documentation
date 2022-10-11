@@ -2,4 +2,9 @@
 * xref:getting-started/introduction.adoc[Introduction]
 
 .Modeling Language
-* xref:meta-jsl:01_jsl.adoc[Entity Model]
+* xref:meta-jsl:01_intro.adoc[Introduction]
+* xref:meta-jsl:02_syntax.adoc[Syntax]
+* xref:meta-jsl:03_model.adoc[Model]
+* xref:meta-jsl:04_types.adoc[Types]
+* xref:meta-jsl:05_entity.adoc[Entity]
+* xref:meta-jsl:06_expression.adoc[Expression]
