@@ -89,6 +89,10 @@
                             <goal>install-node-and-npm</goal>
                         </goals>
                         <phase>validate</phase>
+                        <configuration>
+                            <workingDirectory>${basedir}</workingDirectory>
+                            <installDirectory>${basedir}</installDirectory>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>install dependencies</id>
@@ -98,6 +102,8 @@
                         <phase>compile</phase>
                         <configuration>
                             <arguments>install</arguments>
+                            <workingDirectory>${basedir}</workingDirectory>
+                            <installDirectory>${basedir}</installDirectory>
                         </configuration>
                     </execution>
                     <execution>
@@ -108,6 +114,8 @@
                         <phase>compile</phase>
                         <configuration>
                             <arguments>run generate</arguments>
+                            <workingDirectory>${basedir}</workingDirectory>
+                            <installDirectory>${basedir}</installDirectory>
                         </configuration>
                     </execution>
                 </executions>
@@ -152,11 +160,22 @@
                         <version>${frontend-maven-plugin-version}</version>
                         <executions>
                             <execution>
-                                <id>install dependencies</id>
+                                <id>install node and npm for ui</id>
+                                <goals>
+                                    <goal>install-node-and-npm</goal>
+                                </goals>
+                                <phase>validate</phase>
+                                <configuration>
+                                    <workingDirectory>${basedir}/ui</workingDirectory>
+                                    <installDirectory>${basedir}</installDirectory>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>install ui dependencies</id>
                                 <goals>
                                     <goal>npm</goal>
                                 </goals>
-                                <phase>compile</phase>
+                                <phase>generate-sources</phase>
                                 <configuration>
                                     <arguments>install</arguments>
                                     <workingDirectory>${basedir}/ui</workingDirectory>
