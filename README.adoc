@@ -25,17 +25,8 @@ npm run build
 
 ## Build Documentation
 
-> Certain Antora Modules are pulled in from different Git Repos
-
-### Default way (implicit cloning git repo dependencies)
-
-```bash
-mvn clean install -Dclone
-```
-
-### If there are no changes in remotes
+> Certain Antora Modules are pulled in from different Maven artifacts
 
 ```bash
 mvn clean install
 ```
-
