@@ -134,4 +134,55 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>build-ui</id>
+            <activation>
+                <property>
+                    <name>skipBuildUI</name>
+                    <value>!true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.eirslett</groupId>
+                        <artifactId>frontend-maven-plugin</artifactId>
+                        <version>${frontend-maven-plugin-version}</version>
+                        <executions>
+                            <execution>
+                                <id>install dependencies</id>
+                                <goals>
+                                    <goal>npm</goal>
+                                </goals>
+                                <phase>compile</phase>
+                                <configuration>
+                                    <arguments>install</arguments>
+                                    <workingDirectory>${basedir}/ui</workingDirectory>
+                                    <installDirectory>${basedir}</installDirectory>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>generate ui</id>
+                                <goals>
+                                    <goal>npm</goal>
+                                </goals>
+                                <phase>generate-sources</phase>
+                                <configuration>
+                                    <arguments>run build</arguments>
+                                    <workingDirectory>${basedir}/ui</workingDirectory>
+                                    <installDirectory>${basedir}</installDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <nodeVersion>${node-version}</nodeVersion>
+                            <npmVersion>${npm-version}</npmVersion>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

@@ -5,24 +5,6 @@ https://gitlab.com/antora/antora/-/issues/895
 
 _(Please check out the project separately)_
 
-## Build UI
-
-Every time we make changes in the UI sources, we need to build the package, and `git add ui/build/ -f` the new artifact!
-
-```bash
-cd ui
-# install only if you haven't done it recently / package.json didn't change
-npm install
-npm run build
-```
-
-### Customize JSL Highlighting
-
-* ui/src/css/highlight.css
-* ui/src/js/vendor/highlight.bundle.js
-
-> UI rebuild is mandatory after making changes!
-
 ## Build Documentation
 
 > Certain Antora Modules are pulled in from different Maven artifacts
@@ -30,3 +12,21 @@ npm run build
 ```bash
 mvn clean install
 ```
+
+## Build UI
+
+The `ui` folder contains the theming of the documentation and it's source code.
+
+By default the `mvn clean install` command runs the build process for it, but it is not mandatory if we are only working
+on the docs, and not the theme.
+
+**Ignoring ui builds:**
+
+```bash
+mvn clean install -DskipBuildUI
+```
+
+### Customize JSL Highlighting
+
+* ui/src/css/highlight.css
+* ui/src/js/vendor/highlight.bundle.js
