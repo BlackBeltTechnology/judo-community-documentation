@@ -22,7 +22,7 @@
         <node-version>v14.18.1</node-version>
         <npm-version>8.1.1</npm-version>
 
-        <judo-meta-jsl-version>1.0.1.20221011_163401_844bd538_feature_JNG_4152_docs_as_maven_module</judo-meta-jsl-version>
+        <judo-meta-jsl-version>1.0.1.20221017_112727_9db685fd_develop</judo-meta-jsl-version>
     </properties>
 
     <dependencies>
