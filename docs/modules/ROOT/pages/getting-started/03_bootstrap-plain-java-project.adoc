@@ -243,3 +243,23 @@ public class PersonTest {
     }
 }
 ```
+
+== Running (testing) the application
+
+By typing the following in our terminal:
+
+```bash
+mvn clean install
+```
+
+We should be able to see the following:
+
+```bash
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.843 s - in my.test.PersonTest
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
+```
+
+Which indicates that our test has run successfully.
