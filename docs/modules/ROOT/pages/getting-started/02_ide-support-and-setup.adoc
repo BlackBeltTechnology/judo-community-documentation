@@ -1,0 +1,37 @@
+= IDE Support and setup
+
+:idprefix:
+:idseparator: -
+
+JUDO applications can be developed with any or no IDE. However, to achieve a seamless developer experience, we ship first party
+IDE plugins which come with the following features:
+
+- Syntax highlighting
+- Intellisense capabilities
+- Refactor tools
+
+IDEs with JSL language support:
+
+- Eclipse
+- Intellij IDEA (WIP)
+- VSCode (WIP)
+
+> Before starting with any IDE, make sure you check the xref:ROOT:getting-started/01_system-requirements.adoc[System Requirements] page!
+
+== Eclipse
+
+Installing the JSL DSL plugin in Eclipse:
+
+- Click "Help" on the top of the application
+- Select "Install new software..."
+- In the "Work with" input box, paste the following URL:
+
+TODO
+
+== Intellij IDEA
+
+Plugin development for this platform is still in progress. Stay tuned for updates!
+
+== VSCode
+
+Plugin development for this platform is still in progress. Stay tuned for updates!

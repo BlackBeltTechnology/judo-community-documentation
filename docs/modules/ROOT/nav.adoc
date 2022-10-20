@@ -1,5 +1,9 @@
 .Getting Started
-* xref:getting-started/introduction.adoc[Introduction]
+* xref:getting-started/00_introduction.adoc[Introduction]
+* xref:getting-started/01_system-requirements.adoc[System Requirements]
+* xref:getting-started/02_ide-support-and-setup.adoc[IDE Support and setup]
+* xref:getting-started/03_bootstrap-plain-java-project.adoc[Bootstrap a plain Java project]
+* xref:getting-started/04_bootstrap-spring-boot-project.adoc[Bootstrap a Spring Boot project]
 
 .Modeling Language
 * xref:meta-jsl:01_intro.adoc[Introduction]
@@ -8,3 +12,10 @@
 * xref:meta-jsl:04_types.adoc[Types]
 * xref:meta-jsl:05_entity.adoc[Entity]
 * xref:meta-jsl:06_expression.adoc[Expression]
+
+.Java SDK
+* xref:java-sdk/00_introduction.adoc[Introduction]
+
+.Utilities
+* Maven Plugins
+** xref:tatami-jsl:judo-tatami-jsl-workflow-maven-plugin.adoc[Tatami JSL Workflow maven plugin]

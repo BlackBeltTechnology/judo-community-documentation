@@ -1,0 +1,245 @@
+= Bootstrap a plain Java project
+
+:idprefix:
+:idseparator: -
+
+In the following section we will learn how can we add the JUDO SDK and model processing to a plain Java application
+
+> Before continuing, please make sure you check out the xref:ROOT:getting-started/01_system-requirements.adoc[System Requirements] page
+  to ensure you don't run into odd errors!
+
+== Project structure
+
+We will create the following project structure:
+
+```
+- src
+  - main
+    - resources
+      - model
+        - Test.jsl
+  - test
+    - java
+      - my
+        - test
+          - PersonTest.java
+- pom.xml
+```
+
+=== pom.xml
+
+In our `pom.xml` we will set up a bare minimum project which is necessary to run a JUDO project. Of course the mentioned
+dependencies / plugins can be added to any other Java project.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>my.test</groupId>
+    <artifactId>test</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+
+    <packaging>jar</packaging>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <antlr-runtime-version>3.2</antlr-runtime-version>
+        <build-helper-maven-plugin-version>3.3.0</build-helper-maven-plugin-version>
+
+        <!-- dependencies for testing -->
+        <junit-version>5.9.1</junit-version>
+        <maven-surefire-plugin-version>3.0.0-M7</maven-surefire-plugin-version>
+
+        <!-- JUDO dependencies -->
+        <judo-tatami-jsl-version>1.1.2.20221020_131009_88599e59_develop</judo-tatami-jsl-version>
+        <judo-runtime-core-version>1.0.3.20221019_140434_2a571824_develop</judo-runtime-core-version>
+        <judo-sdk-common-version>1.0.2.20221006_173904_714f26de_develop</judo-sdk-common-version>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>hu.blackbelt.judo.tatami</groupId>
+                <artifactId>judo-tatami-jsl-workflow-maven-plugin</artifactId>
+                <version>${judo-tatami-jsl-version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-models</id>
+                        <goals>
+                            <goal>parser-workflow</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <sources>${basedir}/src/main/resources/model</sources>
+                    <destination>${basedir}/target/generated-sources/model</destination>
+                    <sdkPackagePrefix>my.test</sdkPackagePrefix>
+                    <generateSdkGuice>true</generateSdkGuice>
+                    <saveModels>true</saveModels>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>${build-helper-maven-plugin-version}</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/target/generated-sources/model/sdk/Test</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>add-resource</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>add-resource</goal>
+                        </goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/target/generated-sources/model</directory>
+                                    <targetPath>model</targetPath>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin-version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>${junit-version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>hu.blackbelt.judo.runtime</groupId>
+            <artifactId>judo-runtime-core</artifactId>
+            <version>${judo-runtime-core-version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>hu.blackbelt.judo.runtime</groupId>
+            <artifactId>judo-runtime-core-bootstrap-hsqldb</artifactId>
+            <version>${judo-runtime-core-version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>hu.blackbelt.judo</groupId>
+            <artifactId>judo-sdk-common</artifactId>
+            <version>${judo-sdk-common-version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr-runtime</artifactId>
+            <version>${antlr-runtime-version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit-version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+> For detailed documentation about the `judo-tatami-jsl-workflow-maven-plugin`, please read the corresponding documentation
+  at xref:tatami-jsl:judo-tatami-jsl-workflow-maven-plugin.adoc[judo-tatami-jsl-workflow-maven-plugin]
+
+=== Test.jsl
+
+Create a file at `src/main/resources/model/Test.jsl` with the following contents:
+
+```
+model Test;
+
+type string String(min-size = 0, max-size = 128);
+
+entity Person {
+    field String firstName;
+    field String lastName;
+    derived String fullName => self.firstName + " " + self.lastName ;
+}
+```
+
+=== PersonTest.java
+
+Create a test file at `src/test/java/my/test/PersonTest.java`
+
+```java
+package my.test;
+
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import hu.blackbelt.judo.runtime.core.bootstrap.JudoDefaultModule;
+import hu.blackbelt.judo.runtime.core.bootstrap.JudoModelLoader;
+import hu.blackbelt.judo.runtime.core.bootstrap.dao.rdbms.hsqldb.JudoHsqldbModules;
+import hu.blackbelt.judo.runtime.core.dao.rdbms.hsqldb.HsqldbDialect;
+import my.test.test.guice.test.TestDaoModules;
+import my.test.test.sdk.test.test.Person;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class PersonTest {
+    public static String MODEL_NAME = "Test";
+
+    private Injector injector;
+
+    @Inject
+    Person.PersonDao personDao;
+
+    @BeforeEach
+    protected void init() throws Exception {
+        JudoModelLoader modelLoader = JudoModelLoader
+                .loadFromDirectory(MODEL_NAME, new File("target/generated-sources/model"), new HsqldbDialect(), true);
+
+        injector = Guice.createInjector(
+                JudoHsqldbModules.builder().build(),
+                new TestDaoModules(),
+                new JudoDefaultModule(this, modelLoader)
+        );
+    }
+
+    @Test
+    public void testFullName() {
+        Person person = personDao.create(Person.builder().withFirstName("John").withLastName("Doe").build());
+
+        assertEquals(Optional.of("John Doe"), person.getFullName());
+    }
+}
+```
