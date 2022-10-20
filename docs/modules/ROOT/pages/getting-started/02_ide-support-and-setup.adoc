@@ -11,10 +11,10 @@ IDE plugins which come with the following features:
 - Refactor tools
 - Diagram generation capabilities
 
-IDEs with JSL language support:
+IDEs with first-party JSL language support:
 
 - Eclipse
-- Intellij IDEA (WIP)
+- IntelliJ IDEA (WIP)
 - VSCode (WIP)
 
 > Before starting with any IDE, make sure you check the xref:ROOT:getting-started/01_system-requirements.adoc[System Requirements] page!

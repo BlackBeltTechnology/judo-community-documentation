@@ -3,6 +3,12 @@
 :idprefix:
 :idseparator: -
 
+[IMPORTANT]
+====
+Before continuing, please make sure you check out the xref:ROOT:getting-started/01_system-requirements.adoc[System Requirements] page
+to ensure you don't run into issues while following this guide!
+====
+
 https://github.com/spring-projects/spring-boot[Spring Boot] projects can be set up via our first party archetype.
 
 Open your terminal, and go to a folder where you would like the archetype to generate your project under (e.g.: `~/projects/`).
