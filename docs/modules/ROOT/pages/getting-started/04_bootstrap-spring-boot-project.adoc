@@ -50,7 +50,8 @@ Located under: `src/main/resources/model`
 The model defines a custom type named `String`, an entity `Person` which  __- for the sake of having fun -__ also
 has a `derived` attribute called `fullName`.
 
-```
+[source,jsl]
+----
 model Test
 
 type string String(max-length = 128)
@@ -61,8 +62,7 @@ entity Person {
     derived String fullName => self.firstName + " " \
         + self.lastName ;
 }
-
-```
+----
 
 === TestSpringApplication.java
 

@@ -190,7 +190,8 @@ page.
 
 Create a file at `src/main/resources/model/Test.jsl` with the following contents:
 
-```
+[source,jsl]
+----
 model Test;
 
 type string String(min-size = 0, max-size = 128);
@@ -200,7 +201,7 @@ entity Person {
     field String lastName;
     derived String fullName => self.firstName + " " + self.lastName ;
 }
-```
+----
 
 === PersonTest.java
 
