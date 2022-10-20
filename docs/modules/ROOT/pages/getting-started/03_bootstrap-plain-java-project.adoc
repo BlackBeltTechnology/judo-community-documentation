@@ -199,7 +199,7 @@ type string String(min-size = 0, max-size = 128);
 entity Person {
     field String firstName;
     field String lastName;
-    derived String fullName => self.firstName + " " + self.lastName ;
+    derived String fullName => self.firstName + " " + self.lastName;
 }
 ----
 
@@ -207,7 +207,8 @@ entity Person {
 
 Create a test file at `src/test/java/my/test/PersonTest.java`
 
-```java
+[source,java]
+----
 package my.test;
 
 import com.google.inject.Guice;
@@ -254,7 +255,7 @@ public class PersonTest {
         assertEquals(Optional.of("John Doe"), person.getFullName());
     }
 }
-```
+----
 
 == Running (testing) the application
 
