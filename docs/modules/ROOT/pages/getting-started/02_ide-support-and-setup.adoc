@@ -9,6 +9,7 @@ IDE plugins which come with the following features:
 - Syntax highlighting
 - Intellisense capabilities
 - Refactor tools
+- Diagram generation capabilities
 
 IDEs with JSL language support:
 
