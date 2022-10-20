@@ -146,7 +146,7 @@ dependencies / plugins can be added to any other Java project.
 
         <dependency>
             <groupId>hu.blackbelt.judo.runtime</groupId>
-            <artifactId>judo-runtime-core-bootstrap-hsqldb</artifactId>
+            <artifactId>judo-runtime-core-bootstrap-hsqldb</artifactId> <!-- Using HSQL for the sake of the demo -->
             <version>${judo-runtime-core-version}</version>
         </dependency>
 
@@ -172,8 +172,19 @@ dependencies / plugins can be added to any other Java project.
 </project>
 ```
 
-> For detailed documentation about the `judo-tatami-jsl-workflow-maven-plugin`, please read the corresponding documentation
-  at xref:tatami-jsl:judo-tatami-jsl-workflow-maven-plugin.adoc[judo-tatami-jsl-workflow-maven-plugin]
+==== Database driver
+
+In this example we are pulling in the dependency `judo-runtime-core-bootstrap-hsqldb` which means that our `DAO`-s will
+connect to a HSQL DB instance which will be launched by our application (see Java code below).
+
+The JUDO Platform supports multiple database types, for details about supported drivers please read the xref:database/00_database.adoc[Database]
+section this documentation.
+
+==== Model parsing and code generation
+
+The `judo-tatami-jsl-workflow-maven-plugin` in our `pom.xml` is responsible to parse our model(s), and generate the corresponding
+SDK from it/them. In order to better understand how this plugin works, please visit the xref:tatami-jsl:judo-tatami-jsl-workflow-maven-plugin.adoc[judo-tatami-jsl-workflow-maven-plugin]
+page.
 
 === Test.jsl
 

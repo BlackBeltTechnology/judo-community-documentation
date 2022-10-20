@@ -1,4 +1,4 @@
-= Java SDK
+= Java SDK Layers
 
 :idprefix:
 :idseparator: -

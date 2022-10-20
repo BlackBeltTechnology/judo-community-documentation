@@ -1,0 +1,8 @@
+= Entity Module
+
+:idprefix:
+:idseparator: -
+
+""
+WIP
+""
