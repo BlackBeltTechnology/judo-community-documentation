@@ -4,7 +4,7 @@
 :idseparator: -
 
 The Entity Module is responsible to abstract away the underlying SQL technology. There are two major database abstraction
-paths such a tool usually takes from an architecture point of view:
+paths tools like ours usually take from an architecture point of view:
 
 * Active Record
 * ORM
@@ -12,8 +12,6 @@ paths such a tool usually takes from an architecture point of view:
 JUDO could be considered as an ORM.
 
 == Supported databases
-
-Currently we support:
 
 * HSQL DB
 * PostgreSQL
@@ -41,9 +39,10 @@ for the plain Java stack as well. The only differentiator should be the means of
 == Security
 
 The abstractions in JUDO take care of essential security concepts, such as utilizing prepared statements for database queries,
-but the Entity Layer it self does not provide any high-level security abstractions, such AS RBAC or similar.
+but the Entity Layer it self does not provide any high-level security abstractions, such as RBAC or similar.
 
-Such concepts will be either implemented in higher-level Modules, or developers should add them according to business needs.
+Such concepts will be either brought in by higher-level Modules later, or developers could add them to their stacks right
+now according to their business needs.
 
 == Entities
 
@@ -87,6 +86,7 @@ void testCRUD() {
     address = addressDao.update(/* ... */);
     addressDao.delete(address);
     addressDao.getById(/* ... */);
+    addressDao.query(/* ... */);
     addressDao.getAll();
 }
 
@@ -118,14 +118,13 @@ Through direct DAO operations, entities can be fetched in multiple ways.
 * By fetching all
 * By forming a custom `query`
 
-** Fetching by id **:
+**Fetching by id:**
 
 [source,java]
 ----
 Optional<Address> addressAgain = addressDao.getById(address.get__identifier());
 ----
 
-[NOTE]
 The `.getById()` method in most cases should be used when we would like to fetch an updated version of an entity for which
 we already have a reference to.
 
@@ -137,7 +136,8 @@ List<Address> addressList = addressDao.getAll();
 ----
 
 [IMPORTANT]
-The `.getAll()` method should be used carefully, because for large data-sets, it could have a quite large impact on performance.
+The `.getAll()` method should be used carefully, because for large data-sets, it could have a quite significant impact
+on performance.
 
 **Fetching with a custom query:**
 
@@ -158,8 +158,8 @@ This builder will have `.filter()` methods on it based on the corresponding fiel
 
 Additionally to filters, we support a `.limit()` method as well, where you may define how many elements you'd like to fetch.
 
-Sorting is by adding the `.orderBy()` or `.orderByDescending()` method calls to the builder, and providing the field which
-we would like to use.
+Sorting can be achieved by adding the `.orderBy()` or `.orderByDescending()` method calls to the builder, and providing
+the field which we would like to use.
 
 [INFO]
 ====
