@@ -1,7 +1,7 @@
 .Getting Started
 * xref:getting-started/00_introduction.adoc[Introduction]
 * xref:getting-started/01_system-requirements.adoc[System Requirements]
-* xref:getting-started/02_ide-support-and-setup.adoc[IDE Support and setup]
+* xref:getting-started/02_ide-support-and-setup.adoc[IDE support and setup]
 * xref:getting-started/03_bootstrap-plain-java-project.adoc[Bootstrap a plain Java project]
 * xref:getting-started/04_bootstrap-spring-boot-project.adoc[Bootstrap a Spring Boot project]
 
@@ -18,7 +18,7 @@
 
 .Java SDK
 * xref:java-sdk/00_layers.adoc[Layers]
-* xref:java-sdk/entity-module/00_introduction.adoc[Entity Module]
+* xref:java-sdk/00_introduction.adoc[Entity Module]
 
 .Utilities
 * Maven Plugins

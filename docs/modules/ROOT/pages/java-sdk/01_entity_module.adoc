@@ -1,0 +1,207 @@
+= Entity Module
+
+:idprefix:
+:idseparator: -
+
+The Entity Module is responsible to abstract away the underlying SQL technology. There are two major database abstraction
+paths such a tool usually takes from an architecture point of view:
+
+* Active Record
+* ORM
+
+JUDO could be considered as an ORM.
+
+== Supported databases
+
+Currently we support:
+
+* HSQL DB
+* PostgreSQL
+
+[NOTE]
+====
+In the future we will introduce more database types
+====
+
+== Context
+
+In this documentation we will take the same example model as what we have in the xref:meta-jsl:01_intro.adoc[Introduction]
+section of the JSL documentation.
+
+If you are not familiar with it yet, make sure you check it out!
+
+From a technical point of view, we will be using the xref:getting-started/04_bootstrap-spring-boot-project.adoc[Spring Boot starter] as a reference stack in the sections below.
+
+[NOTE]
+====
+Although we will be building on top of our Spring Boot starter, 99% of the terminologies used in this guide are the same
+for the plain Java stack as well. The only differentiator should be the means of Dependency Injection.
+====
+
+== Security
+
+The abstractions in JUDO take care of essential security concepts, such as utilizing prepared statements for database queries,
+but the Entity Layer it self does not provide any high-level security abstractions, such AS RBAC or similar.
+
+Such concepts will be either implemented in higher-level Modules, or developers should add them according to business needs.
+
+== Entities
+
+Entities act as the data holders of the architecture. They are usually modeled in a way which represents the domain.
+
+When generating the SDK for the Entity Module, the generator generates DAOs (Data Access Object), and Builders for every Entity.
+
+[IMPORTANT]
+====
+It is important to note that in JUDO, developers cannot persist mutations on Entities directly. Changes made to entities
+must be persisted with the use of DAOs.
+====
+
+=== Entity Lifecycle
+
+Creation, updating, and deletion (CRUD) of entities is done in their corresponding DAOs.
+
+Given the following entity:
+
+[source,jsl]
+----
+entity Address {
+    field required String street;
+    field required String city;
+    field String country;
+}
+----
+
+After code generation, we will get the following DAO APIs:
+
+[source,java]
+----
+@Autowired
+Address.AddressDao addressDao;
+
+// ...
+
+@Test
+void testCRUD() {
+    Address address = addressDao.create(/* ... */);
+    address = addressDao.update(/* ... */);
+    addressDao.delete(address);
+    addressDao.getById(/* ... */);
+    addressDao.getAll();
+}
+
+----
+
+==== Entity Creation
+
+[source,java]
+----
+Address address = addressDao
+        .create(Address.builder()
+                .withCity("Budapest")
+                .withCountry("Hungary")
+                .build()
+        );
+----
+
+**Key takeaways:**
+
+* As mentioned above, we can utilize Builders (`Address.builder()`) to easily create instances of Entities
+* We are using the `.create()` method of the DAO
+* The `create()` method returns an instance of our entity if the operation is successful.
+
+==== Entity Retrieval / Fetching
+
+Through direct DAO operations, entities can be fetched in multiple ways.
+
+* By one's own ID
+* By fetching all
+* By forming a custom `query`
+
+** Fetching by id **:
+
+[source,java]
+----
+Optional<Address> addressAgain = addressDao.getById(address.get__identifier());
+----
+
+[NOTE]
+The `.getById()` method in most cases should be used when we would like to fetch an updated version of an entity for which
+we already have a reference to.
+
+**Fetching every entity in the database:**
+
+[source,java]
+----
+List<Address> addressList = addressDao.getAll();
+----
+
+[IMPORTANT]
+The `.getAll()` method should be used carefully, because for large data-sets, it could have a quite large impact on performance.
+
+**Fetching with a custom query:**
+
+[source,java]
+----
+List<Address> addressesInBudapest = addressDao
+        .query()
+        .filterByCity(StringFilter.equalTo("Budapest"))
+        .limit(20)
+        .orderBy(Address.Attribute.CITY) // or
+        //.orderByDescending(Address.Attribute.CITY)
+        .execute();
+----
+
+Every DAO has a `.query()` method which is a builder.
+
+This builder will have `.filter()` methods on it based on the corresponding fields of each Entity.
+
+Additionally to filters, we support a `.limit()` method as well, where you may define how many elements you'd like to fetch.
+
+Sorting is by adding the `.orderBy()` or `.orderByDescending()` method calls to the builder, and providing the field which
+we would like to use.
+
+[INFO]
+====
+Multiple fields may be used for sorting and filtering as well.
+====
+
+As a last step, every query must be fired by calling the `.execute()` method.
+
+__The return type is always a List.__
+
+==== Entity Updates
+
+As mentioned in the previous sections, it is not enough to update a field of an entity, that action alone does not take
+care of the persistence part of the operation. In order to persist our changes, we need to do the following:
+
+[source,java]
+----
+address.setCity("Szeged");
+
+address = addressDao.update(address);
+----
+
+[IMPORTANT]
+It is super important to notice that the `.update()` method has a return value! The Address instance passed as an argument
+to the method will NOT be updated. Instead the return value will have the updated values!
+
+==== Entity Deletion
+
+Deleting an entity can be done by calling the `.delete(/* ... */)` method on the DAO and providing a reference to an
+entity we wish to delete.
+
+[source,java]
+----
+addressDao.delete(address);
+----
+
+
+
+**Entity members:**
+
+* fields
+* relations
+* derived members
+* identifiers
+

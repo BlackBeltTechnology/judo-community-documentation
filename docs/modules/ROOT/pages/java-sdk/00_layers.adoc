@@ -3,6 +3,56 @@
 :idprefix:
 :idseparator: -
 
-""
-WIP
-""
+== Modeling and Architecture
+
+JUDO is a modular platform / toolbox where developers can create models, and use the toolbox to generate
+applications or parts of applications from these models.
+
+Since the inception of our new architecture, developers can pick and chose from application modules or "parts" which
+they want to generate from the same models (JSL). Currently we only ship the "Entity Module", but in total, developers
+using our toolbox should expect to have the following modules shipped latest until the end of next year:
+
+* xref:java-sdk/01_entity_module.adoc[Entity Module]
+* Transfer Module
+* Service Module
+* UI Module
+* Action Script
+
+[IMPORTANT]
+====
+It's important to highlight that developers can use the same JSL DSL to describe any and all parts of the application,
+but are not mandated to generate the whole app with our toolbox or to pick every module.
+====
+
+These modules are building on top of each other, therefore the release order will more than likely be the same.
+
+== Summary
+
+In the following section we will describe what can developers expected on a high level from each module.
+
+=== Entity Module
+
+This module is responsible to abstract away the persistence layer (SQL) so that developers can write code without the
+need to worry about the underlying technologies.
+
+=== Transfer Module
+
+In this module developers can introduce an additional layer of data structuring on top of the Entity Layer
+which most of the time will be consumed by higher level modules, such as Service Module and / or the UI.
+
+The key benefit of this layer is to not mix the technical / application level data structures with business level
+data stored and managed in the Entity Module.
+
+=== Service Module
+
+This module is responsible to expose our Services / Transfer data to to world. By default we will provide REST Services.
+
+=== UI Module
+
+By utilizing the same DSL as all the above modules, developers will be able to model the UI part of applications
+as well. This module will consume services / Transfer objects from the modules mentioned above.
+
+=== Action Script
+
+TBA
+
