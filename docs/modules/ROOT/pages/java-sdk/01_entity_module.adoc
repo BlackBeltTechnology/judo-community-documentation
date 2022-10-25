@@ -348,9 +348,153 @@ In this scenario, every `User` will have different `email` attributes, enforced 
 
 === Relations
 
-The reason why the lifecycle is split for these two types is historical experience managing these two concepts. Based on
-what we learned in the past years, it turned out that it's much easier to reason about the lifecycle of Entities, and their
-fields (composite, or primitive) this way.
+Before continuing, make sure you double-check the corresponding xref::meta-jsl:05_entity.adoc#relations[Relations]
+section in the JSL DSL docs.
 
-The recommended way of looking at this is:
+[IMPORTANT]
+----
+The main difference between relations and fields is the lifecycle of them. While fields are "composited" and tied to the
+inclusive Entity, relations are managed via DAOs.
+----
 
+One may consider relations as associations between entities.
+
+**For example:**
+
+[source,jsl]
+----
+entity abstract Customer {
+    field required Address address;
+	relation Order[] orders opposite customer;
+}
+
+entity Person extends Customer, User {
+	field required String firstName;
+	field required String lastName;
+	derived	String fullName => self.firstName + " " + self.lastName;
+}
+----
+
+Based on the example above, the corresponding SDK code will be the following:
+
+[source,java]
+----
+Person johnPerson = personDao.create(Person.builder()
+        .withEmail("john@doe.com")
+        .withAddress(Address.builder()
+                .withCity("Budapest")
+                .build()
+        ).build()
+);
+
+List<Order> ordersForJohn = personDao.getOrders(johnPerson);
+----
+
+As we can see, the `orders` relation can only be queried via the `Person` entity's `PersonDao`.
+
+The reason why the lifecycle is split for fields and relations is based on historical experience managing these two
+concepts.
+
+Based on what we learned in the past years, it turned out that it's much easier to reason about the lifecycle
+of Entities, and their fields (composite, or primitive) this way. In our case, our SDK is straight forward.
+
+Loose coupling (relations) are managed via DAOs, and tighter couplings (fields) are managed on an Entity level.
+
+==== One Way vs Two Way binding
+
+Relations can be defined in various ways.
+
+**One way:**
+
+[source,jsl]
+----
+entity Address {
+    // ...
+}
+
+entity Customer {
+    field required Address address;
+	// ...
+}
+----
+
+**Two way:**
+
+[source,jsl]
+----
+entity Customer {
+	relation Order[] orders opposite customer;
+    // ...
+}
+
+entity Order {
+	relation required Customer customer opposite orders;
+    // ...
+}
+----
+
+In both "one way" and "two way" binding the resulting DAO API is adjusted to contain:
+
+*
+
+**Opposite add:**
+
+[source,jsl]
+----
+entity OrderItem {
+	relation required Product product opposite-add orderItems[];
+    // ...
+}
+
+entity Product {
+	// ...
+}
+----
+
+=== Derived members
+
+Derived members are dynamic attributes on each entity. The purpose of them is to give developers means to define complex
+"data types" where values are calculated at runtime, rather than statically persisting them.
+
+[IMPORTANT]
+----
+Derived values are computed at query time, only once. If you would like to "refresh" a derived value, you must persist your
+instance state (if there are changes), and re-fetch it by e.g.: calling `getById()`, or `.query()` on a DAO.
+----
+
+**For example:**
+
+[source,jsl]
+----
+entity Person extends Customer, User {
+	field required String firstName;
+	field required String lastName;
+	derived	String fullName => self.firstName + " " + self.lastName;
+}
+----
+
+The `fullName` attribute's value is not persisted in the database, but calculated when an instance is fetched.
+
+[source,java]
+----
+personDao.create(Person.builder()
+        .withFirstName("John")
+        .withLastName("Doe")
+        .withEmail("john@doe.com")
+        .withAddress(Address.builder()
+                .withCity("Budapest")
+                .build()
+        ).build()
+);
+
+List<Person> persons = personDao.query()
+        .filterByEmail(StringFilter.equalTo("john@doe.com"))
+        .execute();
+
+assertEquals(Optional.of("John Doe"), persons.get(0).getFullName());
+----
+
+Derived members are not limited to primitive types!
+
+You may find a detailed description of the expression syntax for derived members in the xref::meta-jsl:05_entity.adoc#derived-members[Derived members] section of
+the JSL DSL documentation.
