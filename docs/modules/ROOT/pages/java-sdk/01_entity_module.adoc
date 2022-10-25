@@ -28,7 +28,7 @@ section of the JSL documentation.
 
 If you are not familiar with it yet, make sure you check it out!
 
-From a technical point of view, we will be using the xref:getting-started/04_bootstrap-spring-boot-project.adoc[Spring Boot starter] as a reference stack in the sections below.
+> From a technical point of view, we will be using the xref:getting-started/04_bootstrap-spring-boot-project.adoc[Spring Boot starter] as a reference stack in the sections below.
 
 [NOTE]
 ====
@@ -114,6 +114,44 @@ Address address = addressDao
 * We are using the `.create()` method of the DAO
 * The `create()` method returns an instance of our entity if the operation is successful.
 
+=== Default values
+
+Entity fields and identifiers may have default values defined for them which can reduce the need of manual coding when
+applicable.
+
+[IMPORTANT]
+Default values are assigned by the framework to primitive fields on Entity creation only!
+
+**Example:**
+
+[source,jsl]
+----
+enum OrderStatus {
+    OPEN = 1;
+    PAID = 2;
+    DELIVERED = 3;
+}
+
+entity Order {
+    field required OrderStatus status = OrderStatus#OPEN;
+    field Integer price = 1500;
+    // ...
+}
+----
+
+Using the example above, the following should be expected:
+
+[source,java]
+----
+Order myOrder = orderDao.create(Order.builder().build());
+
+assertEquals(OrderStatus.OPEN, myOrder.getStatus());
+assertEquals(Optional.of(10L), myOrder.getPrice());
+----
+
+[NOTE]
+Default values have a higher precedence over the `required` modifier.
+
 === Entity Retrieval / Fetching
 
 Through direct DAO operations, entities can be fetched in multiple ways.
@@ -190,6 +228,59 @@ address = addressDao.update(address);
 It is super important to notice that the `.update()` method has a return value! The Address instance passed as an argument
 to the method will NOT be updated. Instead the return value will have the updated values!
 
+=== Entity validation
+
+From this point onwards, we know how to create and update Entity instances, therefore it is time for us to talk about
+validation rules.
+
+Currently, we support two types of validation concepts:
+
+* `required` modifiers
+* type-based validations
+
+> To understand how to use the `required` modifier, please check the xref:meta-jsl:05_entity.adoc#primitive-fields[Primitive Fields]
+section of our documentation
+
+**Example:**
+
+[source,jsl]
+----
+type numeric PostalCode(precision = 5, scale = 0);
+type string String(min-size = 0, max-size = 250);
+
+entity Address {
+    field required String street;
+    field required String city;
+    field PostalCode postalCode;
+}
+----
+
+Based on the model above, the following should be observed:
+
+* We defined a custom numeric type `PostalCode` with a `precision` of `5` and `scale` of `0`
+* We defined a custom string type `String` with a `max-size` of `250`
+* We defined fields `street` and `city` as `requried`
+* We defined a field `postalCode` with our custom type `PostalCode`
+
+As a result, the following will hold true:
+
+[source,java]
+----
+// Will throw because street and city is missing
+Address address1 = addressDao.create(Address.builder()
+        .withPostalCode(1490L)
+        .build()
+);
+
+// Will throw because the postalCode attribute fails the precision rule defined on PostalCode
+Address address2 = addressDao.create(Address.builder()
+        .withCity("Budapest")
+        .withStreet("Custom Street 2.")
+        .withPostalCode(467890L)
+        .build()
+);
+----
+
 === Entity Deletion
 
 Deleting an entity can be done by calling the `.delete(/* ... */)` method on the DAO and providing a reference to an
@@ -203,8 +294,9 @@ addressDao.delete(address);
 == Entity Inheritance
 
 In JUDO Entities may inherit or "subclass" any number of Entities. Consistency is ensured by the toolbox in a way where
-if there are colliding members, the transformation will throw an error. This is explained in great detail in the
-xref::meta-jsl:05_entity.adoc#inheritance[Inheritance] section of the JSL DSL docs.
+if there are colliding members, the transformation will throw an error.
+
+> This concept is explained in great detail in the xref::meta-jsl:05_entity.adoc#inheritance[Inheritance] section of the JSL DSL docs.
 
 Given the following example:
 
@@ -266,7 +358,7 @@ There are two types of `fields`:
 * Primitive
 * Composite
 
-Before continuing, make sure you double-check the corresponding xref::meta-jsl:05_entity.adoc#composition[Composition]
+> Before continuing, make sure you double-check the corresponding xref::meta-jsl:05_entity.adoc#composition[Composition]
 section in the JSL DSL docs understand the reason behind this split.
 
 In essence primitive fields can be for example: derived types of strings, numbers, etc... while "composite fields" can
@@ -321,12 +413,12 @@ In the example above we are creating an Order, and after it's creation we are ad
 the changes.
 
 [IMPORTANT]
-----
+====
 When we create or fetch Orders, the `Order` instance will "pull in" all of it's fields, which means that if there is an
 entity with a field, or fields which may contain multiple hundreds or thousands of elements, it may cause performance issues.
 
 In such cases it is advised to use "relations" instead.
-----
+====
 
 === Identifiers
 
@@ -348,14 +440,14 @@ In this scenario, every `User` will have different `email` attributes, enforced 
 
 === Relations
 
-Before continuing, make sure you double-check the corresponding xref::meta-jsl:05_entity.adoc#relations[Relations]
+> Before continuing, make sure you double-check the corresponding xref::meta-jsl:05_entity.adoc#relations[Relations]
 section in the JSL DSL docs.
 
 [IMPORTANT]
-----
+====
 The main difference between relations and fields is the lifecycle of them. While fields are "composited" and tied to the
 inclusive Entity, relations are managed via DAOs.
-----
+====
 
 One may consider relations as associations between entities.
 
@@ -400,7 +492,7 @@ of Entities, and their fields (composite, or primitive) this way. In our case, o
 
 Loose coupling (relations) are managed via DAOs, and tighter couplings (fields) are managed on an Entity level.
 
-==== One Way vs Two Way binding
+==== One Way vs Two Way vs opposite-add
 
 Relations can be defined in various ways.
 
@@ -418,6 +510,12 @@ entity Customer {
 }
 ----
 
+Going with this setup the `CustomerDao` will also contain the following methods:
+
+* `getAddress()`
+* `createAddress()`
+* `setAddress()`
+
 **Two way:**
 
 [source,jsl]
@@ -433,9 +531,21 @@ entity Order {
 }
 ----
 
-In both "one way" and "two way" binding the resulting DAO API is adjusted to contain:
+Modeling the two entities this way, the resulting DAO APIs are adjusted to contain the following methods:
 
-*
+`OrderDao`:
+
+* `createOrderItems()`
+* `getOrderItems()`
+* `addOrderItems()`
+* `removeOrderItems()`
+
+`CustomerDao`:
+
+* `addOrders()`
+* `createOrders()`
+* `getOrders()`
+* `removeOrders()`
 
 **Opposite add:**
 
@@ -451,16 +561,27 @@ entity Product {
 }
 ----
 
+The "opposite-add" case is a bit different compared to the ones above. If you model your relations this way, the `ProductDao`
+will be adjusted, even though we did not define any relation pointing to the `OrderItem` entity.
+
+The resulting `OrderDao` API will contain the following additional methods:
+
+* `createOrderItems()`
+* `getOrderItems()`
+* `addOrderItems()`
+* `removeOrderItems()`
+
+
 === Derived members
 
 Derived members are dynamic attributes on each entity. The purpose of them is to give developers means to define complex
 "data types" where values are calculated at runtime, rather than statically persisting them.
 
 [IMPORTANT]
-----
+====
 Derived values are computed at query time, only once. If you would like to "refresh" a derived value, you must persist your
 instance state (if there are changes), and re-fetch it by e.g.: calling `getById()`, or `.query()` on a DAO.
-----
+====
 
 **For example:**
 
@@ -496,5 +617,67 @@ assertEquals(Optional.of("John Doe"), persons.get(0).getFullName());
 
 Derived members are not limited to primitive types!
 
-You may find a detailed description of the expression syntax for derived members in the xref::meta-jsl:05_entity.adoc#derived-members[Derived members] section of
+> You may find a detailed description of the expression syntax for derived members in the xref::meta-jsl:05_entity.adoc#derived-members[Derived members] section of
 the JSL DSL documentation.
+
+=== Queries
+
+Queries are dynamic capabilities of Entities. They let the modeler create dynamic functions/methods which can return values
+for entity instances at runtime.
+
+Main differences distinguishing `derived` members from `queries` from an SDK point of view:
+
+[options="header"]
+|======================================================================
+|Property                               | derived   | query
+| Available on Entity                   | `true`    | `false`
+| Available on Dao                      | `false`   | `true`
+| Runs when Entity is queried           | `true`    | `false`
+| Can be run multiple times, manually   | `false`*  | `true`
+| Can have input parameters             | `false`   | `true`
+|======================================================================
+
+__* Derived values can be "refreshed" by re-query-ing the entity instance__
+
+**Example:**
+
+[source,jsl]
+----
+entity Lead {
+    field Integer value = 100000;
+    relation required SalesPerson salesPerson opposite leads;
+    // ...
+}
+
+entity SalesPerson extends Person {
+    relation Lead[] leads opposite salesPerson;
+    query Lead[] leadsOver(Integer limit = 100) => self.leads!filter(lead | lead.value > limit);
+    derived Lead[] leadsOver10 => self.leadsOver(limit = 10);
+    // ...
+}
+----
+
+One of the many neat aspects of queries is the ability for them to be composed into other entity members.
+
+In the example above, we should notice the use of the `derived` field `leadsOver10` utilizing the `leadsOver` query.
+
+The corresponding Java SDK should look like the following:
+
+[source,java]
+----
+SalesPerson createdSalesPerson = salesPersonDao
+        .create(SalesPerson.builder()
+                .withFirstName("Super")
+                .withLastName("Person")
+                .build()
+        );
+
+List<Lead> leadsOver = salesPersonDao
+        .queryLeadsOver(createdSalesPerson, _SalesPerson_leadsOver_Parameters.builder()
+                .withLimit(200) // explicit definition of "limit" to have value of 200 instead of the default 100
+                .build()
+        )
+        .execute();
+
+List<Lead> leadsOver10 = salesPersonDao.getLeadsOver10(createdSalesPerson);
+----
