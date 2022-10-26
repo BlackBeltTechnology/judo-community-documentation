@@ -399,6 +399,13 @@ void testInheritance() {
 In this example you may notice that the list of Orders is queried through the `personDao`. The logic behind this will be
 explained in great detail in the next sections.
 
+== Abstract Entity
+
+The `abstract` modifier has the following effect on entities and DAOs:
+
+* Entities are **not** instantiable via Java code
+* Corresponding DAOs do not have a `.create(/* ... */)` method on them
+
 == Entity Members
 
 The following members can be declared for each Entity:
