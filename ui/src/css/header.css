@@ -276,3 +276,10 @@ body {
   width: 4rem;
   height: 2rem;
 }
+
+/* START JUDO SPECIFIC STYLES */
+
+img.github-link {
+  margin-right: 10px;
+  width: 15px;
+}
