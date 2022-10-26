@@ -28,12 +28,10 @@ These modules are building on top of each other, therefore the release order wil
 
 == Summary
 
-In the following section we will describe what can developers expected on a high level from each module.
-
 === Entity Module
 
 This module is responsible to abstract away the persistence layer (SQL) so that developers can write code without the
-need to worry about the underlying technologies.
+need to worry about the underlying technological details and focus on business features.
 
 === Transfer Module
 
@@ -45,7 +43,7 @@ data stored and managed in the Entity Module.
 
 === Service Module
 
-This module is responsible to expose our Services / Transfer data to to world. By default we will provide REST Services.
+This module is responsible to expose our Services / Transfer data to the world. By default, we will provide REST Services.
 
 === UI Module
 
@@ -55,4 +53,3 @@ as well. This module will consume services / Transfer objects from the modules m
 === Action Script
 
 TBA
-
