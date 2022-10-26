@@ -36,7 +36,7 @@ Our IntelliJ IDEA plugin is a TextMate plugin, which currently only supports syn
 Additional functionality such as intellisense is in the works. In fact the support for the platform should be expected
 to be improved continuously so stay tuned for updates!
 
-Installation instructions could be found in the plugin's https://github.com/BlackBeltTechnology/jsl.tmbundle/blob/develop/doc/install-idea.adoc[Github Repository].
+Installation instructions could be found in the plugin's https://github.com/BlackBeltTechnology/jsl.tmbundle/blob/develop/doc/install-idea.adoc[Github Repository,window=_blank].
 
 == VSCode
 
