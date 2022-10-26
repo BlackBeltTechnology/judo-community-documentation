@@ -1,6 +1,7 @@
 = IDE support and setup
 
 :idprefix:
+:experimental:
 :idseparator: -
 
 JUDO applications can be developed with any or no IDE. However, to achieve a seamless developer experience, we ship first party
@@ -23,16 +24,16 @@ IDEs with first-party JSL language support:
 
 Installing the JSL DSL plugin in Eclipse:
 
-* Click "Help" on the top of the application
-* Select "Install new software..."
+* Click btn:[Help] on the top of the application
+* Select btn:[Install new software...]
 * In the "Work with" input box, paste the following URL: `https://nexus.judo.technology/repository/p2/judo-meta-jsl/1.0.1.20221026_132128_2abe9779_develop`
-* Click "Add"
+* Click btn:[Add]
   * Name: Can be anything, e.g.: "JUDO JSL"
   * Location: Should be filled in, if not, paste it again from the above
 * Select all items in the list
-* Click "Next" in every dialog, if prompted, accept all licenses
+* Click btn:[Next] in every dialog, if prompted, accept all licenses
 * When the "Trust" dialog opens up, select "Always trust all content", and click "Trust Selected"
-* When prompted, click "Restart Now"
+* When prompted, click btn:[Restart Now]
 
 > The URL for the plugin is only an example, the list of plugin releases can be found at the https://github.com/BlackBeltTechnology/judo-meta-jsl/releases[judo-meta-jsl] Releases page.
 
@@ -40,7 +41,7 @@ Installing the JSL DSL plugin in Eclipse:
 
 When we first create a `.jsl` file, Eclipse will bring up a prompt "Configure Xtext".
 
-In this prompt check the "Remember my decision" option and click "Yes".
+In this prompt check the btn:[Remember my decision] option and click btn:[Yes].
 
 === PlantUML Support
 
