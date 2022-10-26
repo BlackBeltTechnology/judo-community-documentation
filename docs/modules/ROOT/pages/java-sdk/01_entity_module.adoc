@@ -11,11 +11,6 @@ paths tools like ours usually take from an architecture point of view:
 
 JUDO could be considered as an ORM.
 
-== Supported databases
-
-* HSQL DB
-* PostgreSQL
-
 == Context
 
 In this documentation we will take the same example model as what we have in the xref:meta-jsl:01_intro.adoc[Introduction,window=_blank]
@@ -23,7 +18,7 @@ section of the JSL documentation.
 
 If you are not familiar with it yet, make sure you check it out!
 
-> From a technical point of view, we will be using the xref:getting-started/04_bootstrap-spring-boot-project.adoc[Spring Boot starter,window=_blank]
+From a technical point of view, we will be using the xref:getting-started/04_bootstrap-spring-boot-project.adoc[Spring Boot starter,window=_blank]
 as a reference stack in the sections below.
 
 [NOTE]
@@ -35,7 +30,7 @@ for the plain Java stack as well. The only differentiator should be the means of
 == Security
 
 The abstractions in JUDO take care of essential security concepts, such as utilizing prepared statements for database queries,
-but the Entity Layer itself does not provide any high-level security abstractions, such as https://en.wikipedia.org/wiki/Role-based_access_control[RBAC]
+but the Entity Layer itself does not provide any high-level security abstractions, such as https://en.wikipedia.org/wiki/Role-based_access_control[RBAC,window=_blank]
 or similar.
 
 Such concepts will be either brought in by higher-level Modules later, or developers could add them to their stacks right
@@ -117,7 +112,7 @@ void testCreate() {
 
 **We should observe:**
 
-* that we can utilize Builders (`Address.builder()`) to easily create instances of Entities
+* that we can utilize Builders (`Address.builder()`) to easily create raw instances of Entities
 * we are using the `.create()` method of the DAO
 * the `create()` method returns an instance of our entity if the operation is successful.
 
@@ -158,12 +153,9 @@ void testDefaults() {
     Order myOrder = orderDao.create(Order.builder().build());
 
     assertEquals(OrderStatus.OPEN, myOrder.getStatus());
-    assertEquals(Optional.of(10L), myOrder.getPrice());
+    assertEquals(Optional.of(1500L), myOrder.getPrice());
 }
 ----
-
-[NOTE]
-Default values have a higher precedence over the `required` modifier.
 
 === Entity Retrieval / Fetching
 
@@ -254,6 +246,11 @@ Address.AddressDao addressDao;
 
 @Test
 void testUpdate() {
+    Address address = addressDao.create(Address.builder()
+        // ...
+        .build()
+    );
+
     address.setCity("Oslo");
 
     address = addressDao.update(address);
@@ -274,7 +271,7 @@ Currently, we support two types of validation concepts:
 * `required` modifiers
 * type-based validations
 
-> To understand how to use the `required` modifier, please check the xref:meta-jsl:05_entity.adoc#primitive-fields[Primitive Fields,window=_blank]
+To understand how to use the `required` modifier, please check the xref:meta-jsl:05_entity.adoc#primitive-fields[Primitive Fields,window=_blank]
 section of our documentation
 
 **Example:**
@@ -350,7 +347,7 @@ by developers to prevent them from being used in parts of the code where it coul
 In JUDO Entities may inherit or "subclass" any number of Entities. Consistency is ensured by the toolbox in a way where
 if there are colliding members, the transformation will throw an error.
 
-> This concept is explained in great detail in the xref::meta-jsl:05_entity.adoc#inheritance[Inheritance,window=_blank]
+This concept is explained in great detail in the xref:meta-jsl:05_entity.adoc#inheritance[Inheritance,window=_blank]
 section of the JSL DSL docs.
 
 Given the following example:
@@ -419,7 +416,7 @@ There are two types of `fields`:
 * Primitive
 * Composite
 
-> Before continuing, make sure you double-check the corresponding xref::meta-jsl:05_entity.adoc#composition[Composition,window=_blank]
+Before continuing, make sure you double-check the corresponding xref:meta-jsl:05_entity.adoc#composition[Composition,window=_blank]
 section in the JSL DSL docs understand the reason behind this split.
 
 In essence primitive fields can be for example: derived types of strings, numbers, etc... while "composite fields" can
@@ -494,7 +491,7 @@ In such cases it is advised to use "relations" instead.
 
 Identifiers are similar to fields, but can only be primitive types.
 
-When we define fields, the architecture is responsible to ensure that every value is unique. This is enforced at creation
+When we define identifiers, the architecture is responsible to ensure that every value is unique. This is enforced at creation
 and update calls as well by the corresponding DAOs.
 
 **Example:**
@@ -510,7 +507,7 @@ In this scenario, every `User` will have different `email` attributes, enforced 
 
 === Relations
 
-> Before continuing, make sure you double-check the corresponding xref::meta-jsl:05_entity.adoc#relations[Relations,window=_blank]
+Before continuing, make sure you double-check the corresponding xref:meta-jsl:05_entity.adoc#relations[Relations,window=_blank]
 section in the JSL DSL docs.
 
 [IMPORTANT]
@@ -580,7 +577,7 @@ Relations can be defined in various ways.
 [source,jsl]
 ----
 entity OrderItem {
-    field Integer amount;
+    field required Integer amount;
     // ...
 }
 
@@ -597,6 +594,7 @@ Going with this setup the `CustomerDao` will contain the following methods (besi
 @Autowired
 Customer.CustomerDao customerDao;
 
+@Test
 void testOneWay() {
     Customer johnCustomer = customerDao.create(Customer.builder()
         .withFirstName("John")
@@ -604,6 +602,7 @@ void testOneWay() {
         .build()
     );
 
+    // new CustomerDAO APIs:
     OrderItem favouriteItem = customerDao.getFavouriteItem(johnCustomer);
     customerDao.setFavouriteItem(johnCustomer, OrderItem.builder().withAmount(150L).build());
 }
@@ -648,6 +647,7 @@ void testTwoWay() {
 
     // new CustomerDAO APIs:
     List<Order> orders = customerDao.getOrders(johnCustomer);
+    customerDao.createOrders(johnCustomer, List.of(/* ... */));
     customerDao.addOrders(johnCustomer, List.of(/* ... */));
     customerDao.removeOrders(johnCustomer, List.of(/* ... */));
     customerDao.queryOrders(johnCustomer.get()).execute();
@@ -701,12 +701,71 @@ void testOppositeAdd() {
 
     // new ProductDAO APIs:
     List<OrderItem> orderItems = productDao.getOrderItems(chainsaw);
+    productDao.createOrderItems(chainsaw, List.of(/* ... */));
     productDao.addOrderItems(chainsaw, List.of(/* ... */));
     productDao.removeOrderItems(chainsaw, List.of(/* ... */));
     List<OrderItem> queriedOrderItems = productDao.queryOrderItems(chainsaw).execute();
 }
 ----
 
+=== Relation DAO methods summarized
+
+==== Not required Single Relations
+
+For the given model:
+
+[source,jsl]
+----
+entity Person {
+    relation Person bestFriend;
+}
+----
+
+The following methods will be generated:
+
+* `Person getBestFriend(Person object)`
+* `void setBestFriend(Person object, Person relatedObject)`
+* `void unsetBestFriend(Person object)`
+
+==== Required Single Relations
+
+For the given model:
+
+[source,jsl]
+----
+entity Person {
+    relation required Animal pet;
+}
+----
+
+The following methods will be generated:
+
+* `Animal getPet(Person object)`
+* `void setPet(Person object, Animal relatedObject)`
+
+In case of `required` relations, DAOs will not contain an `unset` method.
+
+==== Multiple Relations
+
+For the given model:
+
+[source,jsl]
+----
+entity Person {
+    relation Order[] orders;
+}
+----
+
+The following methods will be generated:
+
+* `List<Order> getOrders(Person object)`
+* `List<Order> createOrders(Person object, List.of(/* ... */))`
+* `void addOrders(Person object, List.of(/* ... */))`
+* `void removeOrders(Person object, List.of(/* ... */))`
+* `QueryCustomizer queryOrders(Person object)`
+
+The main difference between `createOrders` and `addOrders` is that `createOrders` explicitly creates not yet persisted
+entries, while `addOrders` throws an exception if any of them are not yet persisted.
 
 === Derived members
 
@@ -759,7 +818,7 @@ void testDerived() {
 
 Derived members are not limited to primitive types!
 
-> You may find a detailed description of the expression syntax for derived members in the xref::meta-jsl:05_entity.adoc#derived-members[Derived members,window=_blank]
+You may find a detailed description of the expression syntax for derived members in the xref:meta-jsl:05_entity.adoc#derived-members[Derived members,window=_blank]
 section of the JSL DSL documentation.
 
 === Queries
