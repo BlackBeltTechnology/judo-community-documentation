@@ -23,7 +23,7 @@ IDEs with first-party JSL language support:
 
 Installing the JSL DSL plugin in Eclipse:
 
-*  Click "Help" on the top of the application
+* Click "Help" on the top of the application
 * Select "Install new software..."
 * In the "Work with" input box, paste the following URL: `https://nexus.judo.technology/repository/p2/judo-meta-jsl/1.0.1.20221026_132128_2abe9779_develop`
 * Click "Add"
