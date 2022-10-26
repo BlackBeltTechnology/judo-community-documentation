@@ -7,6 +7,8 @@
 
 JUDO is built and tested currently against OpenJDK 11. Our recommended vendor is https://www.azul.com/downloads/?version=java-11-lts&package=jdk[Zulu JDK]
 
+> Although the recommended version is JDK 11, the generated code and applications might work with newer versions as well
+
 Checking your JDK version:
 
 [source,bash]
@@ -23,7 +25,7 @@ OpenJDK Runtime Environment Zulu11.58+15-CA (build 11.0.16+8-LTS)
 ...
 ----
 
-> The key here is the version number, which in our case is: `11.0.16`. The version number **MUST** start with `11`!
+> The key here is the version number, which in our case is: `11.0.16`. The version number should start with `11`!
 
 == Maven 3.8.x
 
