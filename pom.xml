@@ -23,6 +23,7 @@
         <npm-version>8.1.1</npm-version>
 
         <judo-meta-jsl-version>1.0.1.20221017_112727_9db685fd_develop</judo-meta-jsl-version>
+        <judo-tatami-jsl-version>1.1.2.20221020_213827_6986e5c4_develop</judo-tatami-jsl-version>
     </properties>
 
     <dependencies>
@@ -30,6 +31,11 @@
             <groupId>hu.blackbelt.judo.meta</groupId>
             <artifactId>hu.blackbelt.judo.meta.jsl.docs</artifactId>
             <version>${judo-meta-jsl-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>hu.blackbelt.judo.tatami</groupId>
+            <artifactId>judo-tatami-jsl-docs</artifactId>
+            <version>${judo-tatami-jsl-version}</version>
         </dependency>
     </dependencies>
 
@@ -48,6 +54,7 @@
                     <filesets>
                         <fileset>
                             <directory>${basedir}/docs/modules/meta-jsl</directory>
+                            <directory>${basedir}/docs/modules/tatami-jsl</directory>
                         </fileset>
                     </filesets>
                 </configuration>
@@ -71,6 +78,12 @@
                                     <artifactId>hu.blackbelt.judo.meta.jsl.docs</artifactId>
                                     <version>${judo-meta-jsl-version}</version>
                                     <outputDirectory>${basedir}/docs/modules/meta-jsl</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>hu.blackbelt.judo.tatami</groupId>
+                                    <artifactId>judo-tatami-jsl-docs</artifactId>
+                                    <version>${judo-tatami-jsl-version}</version>
+                                    <outputDirectory>${basedir}/docs/modules/tatami-jsl</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
