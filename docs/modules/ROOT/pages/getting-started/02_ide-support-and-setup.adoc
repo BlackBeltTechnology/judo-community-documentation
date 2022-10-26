@@ -44,9 +44,9 @@ In this prompt check the "Remember my decision" option and click "Yes".
 
 === PlantUML Support
 
-PlantUML Diagrams are supported in Eclipse.
+PlantUML Diagrams are supported in Eclipse. This feature relies on Graphviz, which needs to be installed on your machine.
 
-On macOS, you need to install Graphviz. Installation instructions can be found at:
+Installation instructions for Graphviz can be found at:
 
 https://www.graphviz.org/download/
 
