@@ -14,7 +14,7 @@ IDE plugins which come with the following features:
 IDEs with first-party JSL language support:
 
 - Eclipse
-- IntelliJ IDEA (WIP)
+- IntelliJ IDEA
 - VSCode (WIP)
 
 > Before starting with any IDE, make sure you check the xref:ROOT:getting-started/01_system-requirements.adoc[System Requirements] page!
