@@ -7,7 +7,7 @@ JUDO applications can be developed with any or no IDE. However, to achieve a sea
 IDE plugins which come with the following features:
 
 - Syntax highlighting
-- Intellisense capabilities
+- IntelliSense capabilities
 - Refactor tools
 - Diagram generation capabilities
 
@@ -15,7 +15,7 @@ IDEs with first-party JSL language support:
 
 - Eclipse
 - IntelliJ IDEA
-- VSCode (WIP)
+- VS Code (WIP)
 
 > Before starting with any IDE, make sure you check the xref:ROOT:getting-started/01_system-requirements.adoc[System Requirements] page!
 
@@ -33,11 +33,11 @@ TODO
 
 Our IntelliJ IDEA plugin is a TextMate plugin, which currently only supports syntax highlighting.
 
-Additional functionality such as intellisense is in the works. In fact the support for the platform should be expected
+Additional functionality such as Code completion is in the works. In fact the support for the platform should be expected
 to be improved continuously so stay tuned for updates!
 
 Installation instructions could be found in the plugin's https://github.com/BlackBeltTechnology/jsl.tmbundle/blob/develop/doc/install-idea.adoc[Github Repository,window=_blank].
 
-== VSCode
+== VS Code
 
 Plugin development for this platform is still in progress. Stay tuned for updates!

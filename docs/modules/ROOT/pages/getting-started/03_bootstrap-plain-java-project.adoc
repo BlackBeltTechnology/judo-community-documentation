@@ -3,7 +3,7 @@
 :idprefix:
 :idseparator: -
 
-In the following section we will learn how can we add the JUDO SDK and model processing to a plain Java application
+In the following section we will learn how we can add the JUDO SDK and model processing to a plain Java application
 
 [IMPORTANT]
 ====
