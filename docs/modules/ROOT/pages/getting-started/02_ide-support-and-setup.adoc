@@ -23,11 +23,42 @@ IDEs with first-party JSL language support:
 
 Installing the JSL DSL plugin in Eclipse:
 
-- Click "Help" on the top of the application
-- Select "Install new software..."
-- In the "Work with" input box, paste the following URL:
+*  Click "Help" on the top of the application
+* Select "Install new software..."
+* In the "Work with" input box, paste the following URL: `https://nexus.judo.technology/repository/p2/judo-meta-jsl/1.0.1.20221026_132128_2abe9779_develop`
+* Click "Add"
+  * Name: Can be anything, e.g.: "JUDO JSL"
+  * Location: Should be filled in, if not, paste it again from the above
+* Select all items in the list
+* Click "Next" in every dialog, if prompted, accept all licenses
+* When the "Trust" dialog opens up, select "Always trust all content", and click "Trust Selected"
+* When prompted, click "Restart Now"
 
-TODO
+> The URL for the plugin is only an example, the list of plugin releases can be found at the https://github.com/BlackBeltTechnology/judo-meta-jsl/releases[judo-meta-jsl] Releases page.
+
+=== First time setup
+
+When we first create a `.jsl` file, Eclipse will bring up a prompt "Configure Xtext".
+
+In this prompt check the "Remember my decision" option and click "Yes".
+
+=== PlantUML Support
+
+PlantUML Diagrams are supported in Eclipse.
+
+On macOS, you need to install Graphviz. Installation instructions can be found at:
+
+https://www.graphviz.org/download/
+
+**Troubleshooting:**
+
+If diagrams are not displayed, you need to update the PlantUML Settings in Eclipse, by providing the "Path to the dot executable".
+
+You can use the following command to get the correct location of `dot`.
+
+```
+which dot
+```
 
 == Intellij IDEA
 
