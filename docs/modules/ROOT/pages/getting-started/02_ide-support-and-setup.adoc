@@ -42,4 +42,4 @@ Installation instructions could be found in the plugin's https://github.com/Blac
 
 The VS Code plugin is a TextMate plugin, which supports syntax highlighting and parser (Xtext Server).
 
-Installation instructions could be found in the plugin's https://github.com/BlackBeltTechnology/judo-jsl-vscode/blob/develop/README.adoc[Github Repository,window=_blank].
+Installation instructions could be found in the plugin's https://github.com/BlackBeltTechnology/judo-jsl-vscode[Github Repository,window=_blank].
