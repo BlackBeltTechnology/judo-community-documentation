@@ -60,9 +60,9 @@ dependencies / plugins can be added to any other Java project.
         <maven-surefire-plugin-version>3.0.0-M7</maven-surefire-plugin-version>
 
         <!-- JUDO dependencies -->
-        <judo-tatami-jsl-version>1.1.2.20221020_131009_88599e59_develop</judo-tatami-jsl-version>
-        <judo-runtime-core-version>1.0.3.20221019_140434_2a571824_develop</judo-runtime-core-version>
-        <judo-sdk-common-version>1.0.2.20221006_173904_714f26de_develop</judo-sdk-common-version>
+        <judo-tatami-jsl-version>1.1.2</judo-tatami-jsl-version>
+        <judo-runtime-core-version>1.0.3</judo-runtime-core-version>
+        <judo-sdk-common-version>1.0.2</judo-sdk-common-version>
     </properties>
 
     <build>
