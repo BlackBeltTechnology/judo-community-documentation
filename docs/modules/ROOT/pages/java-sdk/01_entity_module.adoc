@@ -828,7 +828,7 @@ Derived members are not limited to primitive types!
 You may find a detailed description of the expression syntax for derived members in the xref:meta-jsl:05_entity.adoc#derived-members[Derived members,window=_blank]
 section of the JSL DSL documentation.
 
-=== Queries
+=== Instance Queries
 
 Queries are dynamic capabilities of Entities. They let the modeler create dynamic functions/methods which can return values
 for entity instances at runtime.
@@ -846,6 +846,14 @@ Main differences distinguishing `derived` members from `queries` from an SDK poi
 |======================================================================
 
 __* Derived values can be "refreshed" by re-query-ing the entity instance__
+
+As stated in the table above, instance queries are defined as entity members, however, from a technical point of view
+the `query` is generated on DAOs, and not as methods/fields on entities.
+
+Since queries are methods on DAOs, they can be called explicitly any number of times.
+
+Regardless of the number of parameters in the model, the DAO method's first parameter will always be an instance
+of the entity on which we defined the query.
 
 **Example:**
 
@@ -896,3 +904,47 @@ void testQuery() {
     List<Lead> leadsOver10 = salesPersonDao.getLeadsOver10(createdSalesPerson);
 }
 ----
+
+== Static Query
+
+Every static query defined in our model will manifest a dedicated DAO with a single method.
+
+Besides the above, Static Queries behave the exact same way as Instance Queries do.
+
+**Example:**
+
+[source,jsl]
+----
+model QueryModel;
+
+type numeric Integer(precision = 9, scale = 0);
+
+query Integer totalNumberOfLeads() => Lead!size();
+
+entity Lead {
+	field Integer value;
+}
+
+----
+
+Utilizing the generated SDK:
+
+[source,java]
+----
+@Autowired
+TotalNumberOfLeads.TotalNumberOfLeadsDao totalNumberOfLeadsDao;
+
+@Autowired
+Lead.LeadDao leadDao;
+
+@Test
+public void testStaticQuery() {
+    leadDao.create(Lead.builder().withValue(50).build());
+    leadDao.create(Lead.builder().withValue(175).build());
+
+    assertEquals(2, totalNumberOfLeadsDao.getTotalNumberOfLeads());
+}
+----
+
+In this example we can see that the modeled `totalNumberOfLeads` query resulted in the `getTotalNumberOfLeads()` being added
+to the dedicated DAO `TotalNumberOfLeads.TotalNumberOfLeadsDao`.
