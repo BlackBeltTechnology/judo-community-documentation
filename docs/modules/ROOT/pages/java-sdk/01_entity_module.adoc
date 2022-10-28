@@ -946,5 +946,5 @@ public void testStaticQuery() {
 }
 ----
 
-In this example we can see that the modeled `totalNumberOfLeads` query resulted in the `getTotalNumberOfLeads()` being added
-to the dedicated DAO `TotalNumberOfLeads.TotalNumberOfLeadsDao`.
+In this example we can see that the modeled `totalNumberOfLeads` query resulted in the `getTotalNumberOfLeads()` method
+being added to the dedicated `TotalNumberOfLeads.TotalNumberOfLeadsDao`.
