@@ -911,8 +911,6 @@ Since static queries are defined on a root level of our models, they are conside
 to entities, therefore they cannot be generated on entity prefixes/namespaces (e.g.: `Lead.LeadDao`). Every static query
 defined in our model will manifest a dedicated DAO (e.g.: `TotalNumberOfLeads.TotalNumberOfLeadsDao`).
 
-The generated methods behave similarly to Instance Queries.
-
 **Example:**
 
 [source,jsl]
