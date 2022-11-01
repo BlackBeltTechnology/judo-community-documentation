@@ -907,9 +907,9 @@ void testQuery() {
 
 == Static Query
 
-Every static query defined in our model will manifest a dedicated DAO with a single method.
+Every static query defined in our model will manifest a dedicated DAO.
 
-Besides the above, Static Queries behave the exact same way as Instance Queries do.
+Static Queries behave the exact same way as Instance Queries do.
 
 **Example:**
 
@@ -920,14 +920,17 @@ model QueryModel;
 type numeric Integer(precision = 9, scale = 0);
 
 query Integer totalNumberOfLeads() => Lead!size();
+query Lead[] rootAllLeadsBetween(Integer min = 0, Integer max = 100) => Lead!filter(l | l.value > min and  l.value < max);
+query Integer rootCountAllLeadsBetween(Integer min = 0, Integer max = 100) => Lead!filter(l | l.value > min and  l.value < max)!size();
 
 entity Lead {
 	field Integer value;
 }
-
 ----
 
-Utilizing the generated SDK:
+=== Parameterless Static Query
+
+Parameterless static queries are generated on their corresponding dedicated DAOs as methods with a prefix of "get".
 
 [source,java]
 ----
@@ -946,5 +949,70 @@ public void testStaticQuery() {
 }
 ----
 
-In this example we can see that the modeled `totalNumberOfLeads` query resulted in the `getTotalNumberOfLeads()` method
-being added to the dedicated `TotalNumberOfLeads.TotalNumberOfLeadsDao`.
+=== Static Queries with parameters
+
+Compared to parameterless static queries, the generated Java methods differ based on return types.
+
+Methods for queries returning:
+
+* Collections: start with "search", and parameters can be set on the chained `.execute(/* ... */)` method.
+* Single references, or primitives: start with "get", and parameters can be set on the same method.
+
+[source,java]
+----
+@Autowired
+RootAllLeadsBetween.RootAllLeadsBetweenDao rootAllLeadsBetweenDao;
+
+@Autowired
+RootCountAllLeadsBetween.RootCountAllLeadsBetweenDao rootCountAllLeadsBetweenDao;
+
+@Autowired
+Lead.LeadDao leadDao;
+
+@Test
+public void testStaticQuery() {
+    leadDao.create(Lead.builder().withValue(50).build());
+    leadDao.create(Lead.builder().withValue(175).build());
+
+    List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.searchRootAllLeadsBetween()
+        .execute(_QueryModel_rootAllLeadsBetween_Parameters.builder()
+            .withMax(80)
+            .withMin(10)
+            .build()
+        );
+    assertEquals(1, rootAllLeadsBetween.size());
+    assertEquals(Optional.of(50), rootAllLeadsBetween.get(0).getValue());
+
+    Integer rootCountAllLeadsBetween = rootCountAllLeadsBetweenDao.getRootCountAllLeadsBetween(_QueryModel_rootCountAllLeadsBetween_Parameters.builder()
+        .withMin(10)
+        .withMax(80)
+        .build()
+    );
+
+    assertEquals(1, rootCountAllLeadsBetween);
+}
+----
+
+The reason why the API is different for collection types and every other type is to let developers provide additional
+filter and paging capabilities as traditional queries have.
+
+**Example:**
+
+[source,java]
+----
+@Autowired
+RootAllLeadsBetween.RootAllLeadsBetweenDao rootAllLeadsBetweenDao;
+
+@Test
+public void testStaticQuery() {
+    // ...
+
+    List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.searchRootAllLeadsBetween()
+        .limit(25) // additionl limit
+        .orderBy(Lead.Attribute.VALUE) // additional ordering
+        .execute(_QueryModel_rootAllLeadsBetween_Parameters.builder()
+            .withMax(80)
+            .build()
+        );
+}
+----
