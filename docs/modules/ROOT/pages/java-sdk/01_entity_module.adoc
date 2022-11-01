@@ -828,7 +828,7 @@ Derived members are not limited to primitive types!
 You may find a detailed description of the expression syntax for derived members in the xref:meta-jsl:05_entity.adoc#derived-members[Derived members,window=_blank]
 section of the JSL DSL documentation.
 
-=== Instance Queries
+=== Instance Query
 
 Queries are dynamic capabilities of Entities. They let the modeler create dynamic functions/methods which can return values
 for entity instances at runtime.
@@ -907,9 +907,11 @@ void testQuery() {
 
 == Static Query
 
-Every static query defined in our model will manifest a dedicated DAO.
+Since static queries are defined on a root level of our models, they are considered special. They cannot be directly tied
+to entities, therefore they cannot be generated on entity prefixes/namespaces (e.g.: `Lead.LeadDao`). Every static query
+defined in our model will manifest a dedicated DAO (e.g.: `TotalNumberOfLeads.TotalNumberOfLeadsDao`).
 
-Static Queries behave the exact same way as Instance Queries do.
+The generated methods behave similarly to Instance Queries.
 
 **Example:**
 
@@ -927,6 +929,8 @@ entity Lead {
 	field Integer value;
 }
 ----
+
+Depending on the return types, and the existence or absence of parameters, the generated APIs differ.
 
 === Parameterless Static Query
 
