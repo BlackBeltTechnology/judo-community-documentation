@@ -828,7 +828,7 @@ Derived members are not limited to primitive types!
 You may find a detailed description of the expression syntax for derived members in the xref:meta-jsl:05_entity.adoc#derived-members[Derived members,window=_blank]
 section of the JSL DSL documentation.
 
-=== Queries
+=== Instance Query
 
 Queries are dynamic capabilities of Entities. They let the modeler create dynamic functions/methods which can return values
 for entity instances at runtime.
@@ -846,6 +846,14 @@ Main differences distinguishing `derived` members from `queries` from an SDK poi
 |======================================================================
 
 __* Derived values can be "refreshed" by re-query-ing the entity instance__
+
+As stated in the table above, instance queries are defined as entity members, however, from a technical point of view
+the `query` is generated on DAOs, and not as methods/fields on entities.
+
+Since queries are methods on DAOs, they can be called explicitly any number of times.
+
+Regardless of the number of parameters in the model, the DAO method's first parameter will always be an instance
+of the entity on which we defined the query.
 
 **Example:**
 
@@ -894,5 +902,119 @@ void testQuery() {
         .execute();
 
     List<Lead> leadsOver10 = salesPersonDao.getLeadsOver10(createdSalesPerson);
+}
+----
+
+== Static Query
+
+Since static queries are defined on a root level of our models, they are considered special. They cannot be directly tied
+to entities, therefore they cannot be generated on entity prefixes/namespaces (e.g.: `Lead.LeadDao`). Every static query
+defined in our model will manifest a dedicated DAO (e.g.: `TotalNumberOfLeads.TotalNumberOfLeadsDao`).
+
+**Example:**
+
+[source,jsl]
+----
+model QueryModel;
+
+type numeric Integer(precision = 9, scale = 0);
+
+query Integer totalNumberOfLeads() => Lead!size();
+query Lead[] rootAllLeadsBetween(Integer min = 0, Integer max = 100) => Lead!filter(l | l.value > min and  l.value < max);
+query Integer rootCountAllLeadsBetween(Integer min = 0, Integer max = 100) => Lead!filter(l | l.value > min and  l.value < max)!size();
+
+entity Lead {
+	field Integer value;
+}
+----
+
+Depending on the return types, and the existence or absence of parameters, the generated APIs differ.
+
+=== Parameterless Static Query
+
+Parameterless static queries are generated on their corresponding dedicated DAOs as methods with a prefix of "get".
+
+[source,java]
+----
+@Autowired
+TotalNumberOfLeads.TotalNumberOfLeadsDao totalNumberOfLeadsDao;
+
+@Autowired
+Lead.LeadDao leadDao;
+
+@Test
+public void testStaticQuery() {
+    leadDao.create(Lead.builder().withValue(50).build());
+    leadDao.create(Lead.builder().withValue(175).build());
+
+    assertEquals(2, totalNumberOfLeadsDao.getTotalNumberOfLeads());
+}
+----
+
+=== Static Queries with parameters
+
+Compared to parameterless static queries, the generated Java methods differ based on return types.
+
+Methods for queries returning:
+
+* Collections: start with "search", and parameters can be set on the chained `.execute(/* ... */)` method.
+* Single references, or primitives: start with "get", and parameters can be set on the same method.
+
+[source,java]
+----
+@Autowired
+RootAllLeadsBetween.RootAllLeadsBetweenDao rootAllLeadsBetweenDao;
+
+@Autowired
+RootCountAllLeadsBetween.RootCountAllLeadsBetweenDao rootCountAllLeadsBetweenDao;
+
+@Autowired
+Lead.LeadDao leadDao;
+
+@Test
+public void testStaticQuery() {
+    leadDao.create(Lead.builder().withValue(50).build());
+    leadDao.create(Lead.builder().withValue(175).build());
+
+    List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.searchRootAllLeadsBetween()
+        .execute(_QueryModel_rootAllLeadsBetween_Parameters.builder()
+            .withMax(80)
+            .withMin(10)
+            .build()
+        );
+    assertEquals(1, rootAllLeadsBetween.size());
+    assertEquals(Optional.of(50), rootAllLeadsBetween.get(0).getValue());
+
+    Integer rootCountAllLeadsBetween = rootCountAllLeadsBetweenDao.getRootCountAllLeadsBetween(_QueryModel_rootCountAllLeadsBetween_Parameters.builder()
+        .withMin(10)
+        .withMax(80)
+        .build()
+    );
+
+    assertEquals(1, rootCountAllLeadsBetween);
+}
+----
+
+The reason why the API is different for collection types and every other type is to let developers provide additional
+filter and paging capabilities as traditional queries have.
+
+**Example:**
+
+[source,java]
+----
+@Autowired
+RootAllLeadsBetween.RootAllLeadsBetweenDao rootAllLeadsBetweenDao;
+
+@Test
+public void testStaticQuery() {
+    // ...
+
+    List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.searchRootAllLeadsBetween()
+        .limit(25) // additionl limit
+        .orderBy(Lead.Attribute.VALUE) // additional ordering
+        .execute(_QueryModel_rootAllLeadsBetween_Parameters.builder()
+            .withMax(80)
+            .build()
+        );
 }
 ----
