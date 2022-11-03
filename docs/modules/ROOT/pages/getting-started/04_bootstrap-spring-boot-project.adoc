@@ -21,9 +21,10 @@ test model and a simple integration test:
 mvn org.apache.maven.plugins:maven-archetype-plugin:3.1.1:generate -B \
   -DarchetypeGroupId=hu.blackbelt.judo.jsl \
   -DarchetypeArtifactId=judo-jsl-springboot-archetype \
-  -DarchetypeVersion=1.0.3 \
+  -DarchetypeVersion=1.0.4 \
   -DgroupId=com.example \
-  -DmodelName=Test
+  -DmodelName=Test \
+  -DapplicationName=TestApp
 ----
 
 > For detailed documentation on the Archetype, please visit the https://github.com/BlackBeltTechnology/judo-jsl-springboot-archetype[judo-jsl-springboot-archetype]
@@ -70,14 +71,14 @@ entity Person {
 }
 ----
 
-=== TestSpringApplication.java
+=== TestApp.java
 
 Located under: `src/main/java/com/example/test`
 
 This is the entry point of a bare-bones Spring Boot Application similar to what you'd get if you'd have used the
 https://start.spring.io[start.spring.io] generator
 
-=== TestSpringApplicationTests.java
+=== TestAppTests.java
 
 Located under: `src/test/java/com/example/test`
 
@@ -95,7 +96,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
-class TestSpringApplicationTests {
+class TestAppTests {
     @Autowired
     Person.PersonDao personDao;
 
