@@ -21,10 +21,9 @@ test model and a simple integration test:
 mvn org.apache.maven.plugins:maven-archetype-plugin:3.1.1:generate -B \
   -DarchetypeGroupId=hu.blackbelt.judo.jsl \
   -DarchetypeArtifactId=judo-jsl-springboot-archetype \
-  -DarchetypeVersion=1.0.4 \
+  -DarchetypeVersion=1.0.3 \
   -DgroupId=com.example \
-  -DmodelName=Test \
-  -DapplicationName=TestApp
+  -DmodelName=Test
 ----
 
 > For detailed documentation on the Archetype, please visit the https://github.com/BlackBeltTechnology/judo-jsl-springboot-archetype[judo-jsl-springboot-archetype]
@@ -71,7 +70,7 @@ entity Person {
 }
 ----
 
-=== TestApp.java
+=== TestSpringApplication.java
 
 Located under: `src/main/java/com/example/test`
 
@@ -96,7 +95,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
-class TestAppTests {
+class TestSpringApplicationTests {
     @Autowired
     Person.PersonDao personDao;
 
