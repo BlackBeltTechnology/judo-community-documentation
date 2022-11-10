@@ -65,6 +65,14 @@ dependencies / plugins can be added to any other Java project.
         <judo-sdk-common-version>1.0.2</judo-sdk-common-version>
     </properties>
 
+    <!--  Required for transitive Eclipse Platform artifacts  -->
+    <pluginRepositories>
+        <pluginRepository>
+            <id>ecentral</id>
+            <url>https://raw.githubusercontent.com/jmini/ecentral/HEAD/repo</url>
+        </pluginRepository>
+    </pluginRepositories>
+
     <build>
         <plugins>
             <plugin>
