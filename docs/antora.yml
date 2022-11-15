@@ -1,7 +1,7 @@
-name: ''
+name: judo-community
 title: Judo Community
 version: master
-display_version: latest
+display_version: master
 start_page: ROOT:getting-started/00_introduction.adoc
 nav:
 - modules/ROOT/nav.adoc
