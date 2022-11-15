@@ -7,20 +7,19 @@
     "test:local": "serve build",
     "install": "node post-install.js",
     "build-ui": "cd ui && npm install && npm run build",
-    "generate": "npm run antora antora-playbook.yml",
-    "antora": "DOCSEARCH_ENABLED=true DOCSEARCH_ENGINE=lunr antora"
+    "generate": "DOCSEARCH_ENABLED=true DOCSEARCH_ENGINE=lunr antora --fetch antora-playbook.yml"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@antora/cli": "2.3",
-    "@antora/site-generator-default": "2.3",
-    "antora-lunr": "0.8.0",
-    "asciidoctor-kroki": "0.14.0",
-    "fs-extra": "^10.0.0"
+    "antora-lunr": "^0.8.0",
+    "asciidoctor-kroki": "^0.16.0",
+    "fs-extra": "^10.1.0"
   },
   "devDependencies": {
+    "@antora/cli": "3.1.2",
+    "@antora/site-generator": "3.1.2",
     "serve": "^14.0.1"
   }
 }
