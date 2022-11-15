@@ -1,0 +1,115 @@
+= Bootstrap a Spring Boot project
+
+:idprefix:
+:idseparator: -
+
+[IMPORTANT]
+====
+Before continuing, please make sure you check out the xref:ROOT:getting-started/01_system-requirements.adoc[System Requirements] page
+to ensure you don't run into issues while following this guide!
+====
+
+https://github.com/spring-projects/spring-boot[Spring Boot] projects can be set up via our first party archetype.
+
+Open your terminal, and go to a folder where you would like the archetype to generate your project under (e.g.: `~/projects/`).
+
+Running the following command generates a https://github.com/spring-projects/spring-boot[Spring Boot] project with a
+test model and a simple integration test:
+
+[source,bash]
+----
+mvn org.apache.maven.plugins:maven-archetype-plugin:3.1.1:generate -B \
+  -DarchetypeGroupId=hu.blackbelt.judo.jsl \
+  -DarchetypeArtifactId=judo-jsl-springboot-archetype \
+  -DarchetypeVersion=1.0.3 \
+  -DgroupId=com.example \
+  -DmodelName=Test
+----
+
+> For detailed documentation on the Archetype, please visit the https://github.com/BlackBeltTechnology/judo-jsl-springboot-archetype[judo-jsl-springboot-archetype]
+repository
+
+Once the archetype has finished generating sources, your project should be available under `~/projects/com.example.Test`
+
+Running `mvn clean install` under your project will run the build and tests as well. If you haven't modified anything, the process should finish without any errors.
+
+== Bootstrapped sources
+
+=== application.properties
+
+Located under: `src/main/resources`
+
+This is a standard Spring Boot resource which by default is generated to utilize HSQL Database (we support PostgreSQL as well).
+
+```
+spring.datasource.driver-class-name=org.hsqldb.jdbc.JDBCDriver
+spring.datasource.url=jdbc:hsqldb:mem:testdb;DB_CLOSE_DELAY=-1
+spring.datasource.username=sa
+spring.datasource.password=
+spring.liquibase.change-log=classpath:model/Test-liquibase_hsqldb.changelog.xml
+judo.modelName=Test
+```
+
+=== Test.jsl
+
+Located under: `src/main/resources/model`
+
+The model defines a custom type named `String`, an entity `Person` which  __- for the sake of having fun -__ also
+has a `derived` attribute called `fullName`.
+
+[source,jsl]
+----
+model Test;
+
+type string String(min-size = 0, max-size = 128);
+
+entity Person {
+    field String firstName;
+    field String lastName;
+    derived String fullName => self.firstName + " " + self.lastName;
+}
+----
+
+=== TestSpringApplication.java
+
+Located under: `src/main/java/com/example/test`
+
+This is the entry point of a bare-bones Spring Boot Application similar to what you'd get if you'd have used the
+https://start.spring.io[start.spring.io] generator
+
+=== TestAppTests.java
+
+Located under: `src/test/java/com/example/test`
+
+[source,java]
+----
+package com.example.test;
+
+import com.example.test.test.sdk.test.test.Person;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@SpringBootTest
+class TestSpringApplicationTests {
+    @Autowired
+    Person.PersonDao personDao;
+
+    @Test
+    void testDaoFunctions() {
+        Person createdPerson = personDao.create(Person.builder()
+                .withFirstName("FirstName")
+                .withLastName("LastName")
+                .build());
+
+        assertEquals(Optional.of("FirstName"), createdPerson.getFirstName());
+        assertEquals(Optional.of("LastName"), createdPerson.getLastName());
+        // Test derived
+        assertEquals(Optional.of("FirstName LastName"), createdPerson.getFullName());
+    }
+}
+----

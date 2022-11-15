@@ -1,0 +1,116 @@
+= Introduction
+ifndef::env-site,env-github[]
+include::../_attributes.adoc[]
+endif::[]
+// Settings
+:idprefix:
+:idseparator: -
+
+""
+The right choice of abstraction leads to more efficient development and better applications.
+""
+
+The following chapters provide a theoretical background to JUDO. If you are not interested in these details, feel free to jump straight to the technical chapters.
+
+== Pressure of time
+
+Like it or not, everything is speeding up in our world today. The accelerated pace has an impact on companies, business processes and the time to market of products. The change does not leave the software industry untouched either. The software industry is perhaps under more time pressure than any other industry.
+
+As a developer, we know that creating high-quality applications takes a lot of thought and, most importantly, time. This is in stark contrast to the time pressure on developers. In addition to the fact that traditional manual coding takes too much time from developers, the risk of unwanted human error remains quite high.
+
+The pressure of time lead to poor quality applications and missed deadlines. There is a growing demand for innovative solutions that speed up the entire software development process while also improving the quality of the result.
+
+== Level of abstraction
+
+Abstraction is the process of discarding some unnecessary features in order to work more efficiently with the remaining ones. Through abstraction, programming languages reduce complexity and increase efficiency. Like art, software code is a representation of reality without unwanted details. 
+
+We, the developers of JUDO, firmly believe in the power of abstraction. To express our ideas in software code, we need the right level of abstraction in our development tools. If the level of abstraction is too low, too much code will be written unnecessarily, repeating the same code fragments many times. Repetition inevitably wastes time, reduces maintainability and unnecessarily increases the likelihood of errors. If the level of abstraction is too high, we cannot express the details with sufficient precision. The right choice of abstraction leads to more efficient development and better applications.
+
+== Less code
+
+In the software industry, high-abstraction tools are now called low-code tools, because they require less (or low) code to create applications. Simply put, low-code development is a paradigm that uses models as the primary artifact of the development process, and the implementation is (semi-)automatically generated from the models. In most cases, models are created using graphical diagrams, drag-and-drop editing of boxes and playing with the connecting lines between them. 
+Bearing the above in mind, JUDO is a low-code tool. But unlike other popular low-code platforms, JUDO is not a graphical design tool. It provides a text-based language, called JSL (JUDO Specification Language). The overall goal of JSL is to foster unambiguous and readable descriptions of applications. Because of the accuracy of JSL, models can be run, tested, and integrated into coding projects. It works with any Java backend platform, but specifically supports Spring, Spring Boot and OSGi.
+
+What are the benefits of using plain text instead of drag and drop diagram design?
+
+* Easy editing, it is extremely quick to write.
+* Your usual IDE tool can be used to edit and modify the application. If you want to change a part of the business model, there is no need to switch contexts.
+* Version management and merging are easy. You can manage all JSL text files along with regular source codes.
+
+On the other hand, let's not neglect the importance of diagrams, because a picture is worth a thousand words. Even though JUDO's primary language is plain text, it can generate valuable diagrams.
+
+== Enterprise application
+
+Raising the level of abstraction also has its drawbacks. The higher the level of abstraction, the narrower the application area. So, in addition to choosing the right level of abstraction, it is essential to check whether our development tools are suitable for the target application.
+
+JUDO is a high-abstraction level development toolbox optimized for creating enterprise applications. There are numerous definitions of what an enterprise application is. We define enterprise application as follows:
+
+On the one hand an enterprise application is a software that runs on a remote server in a private, public or hybrid cloud. In most cases, web browsers and mobile devices are used to access the remote server over a network.
+
+On the other hand enterprise applications are used to satisfy the needs of an organization rather than individual users. Such organizations include businesses, schools, interest-based user groups, charities, or governments. The goal of enterprise applications is to improve the organization's productivity and efficiency.
+
+== Toolbox
+
+Last but not least, JUDO is not a platform, but a toolbox. A toolbox where developers can choose the tool they need and ignore the others. JUDO never forces you to change your design process or best practice, rather it gives you choices.
+
+It is specifically designed for software developers who want to speed up their work and focus on business needs instead of typing glue codes and copying design patterns.
+
+////
+
+Along this line, business analysts involved in development projects often lack the technical knowledge to explain their expectations to developers in a transparent and holistic way. And communication gaps lead to unnecessary tensions and further reduce efficiency. As a result, even the best programmers sometimes find themselves in a situation where they misunderstand the requirements and the final product does not meet the original vision.
+
+The problems mentioned above lead to poor quality applications and missed deadlines. There is a growing demand for innovative solutions that speed up the entire software development process while also improving the quality of the result.
+
+////
+
+////
+== Low-code development
+
+Historically, model-driven design (MDE) is a development paradigm that uses models as the primary artifact of the development process. It focuses on creating and exploiting domain models, which are abstract representations of the knowledge and activities that govern a given application domain. In MDE, the implementation is (semi)automatically generated from the models.
+
+Low-code is the new buzzword, the new hype in the modeling world. Since MDE terminology is not cool, tool vendors in the modeling realm are now positioning themselves as low-code platforms. Nothing new under the sun, just a different marketing strategy.
+
+== Application Model
+
+The application model is a representation of the system under development. Its purpose is to assist software professionals and business domain experts to visualize the new system in a simplified way. In other words, a model is an external and explicit representation of reality, one that the people aim to redesign, transform or explore.
+
+The aim of constructing an application model is to put business domain experts and software professionals on the same page and to answer all questions that may occur during the meetings and negotiations of the application.
+
+== Enterprise Application
+
+
+Besides the business logic, an enterprise application must satisfy a list of non-functional requirements, such as:
+
+* Database transaction and cancellations
+* Administrative functions
+* Authentication and authorization
+* Audit Tracking
+* External Interfaces
+* Reporting Requirements
+* etc.
+
+In general, the satisfaction of these complex requirements need specialized knowledge or choose JUDO!
+
+== JUDO Overview
+
+A picture is worth a thousand words, this idiom absolutely fits describing JUDO.
+
+Application models developed in JUDO are not only made for developers but also for business users, common people, and anybody interested to understand the system. An application model in JUDO describes a software, but it must be clear that JUDO is not a development method, rather it is a tool that aims to create, modify and deploy a successful software system.
+
+The JUDO framework is a low-code development platform (MDE tool) optimized for creating and operating enterprise automation applications.
+
+The JUDO framework consists of two components, which are well separated but form a coherent system:
+
+* the JUDO development environment supports the work of a custom application development team on a model-driven basis,
+
+* the JUDO application run-time environment provides the full life-cycle of the running application modules.
+
+The JUDO development environment enables IT professionals to focus exclusively on their most important tasks during the implementation project. The development environment clearly separates design, architectural and programming tasks:
+
+* business analysts use formal descriptions to describe the business logic of the application being developed;
+
+* software developers implement only custom code blocks of the application (eg. unique interface components, special data storage solutions) with traditional programming work;
+
+* software architects can modify the software architecture or replace 3rd party components without changing business logic.
+
+////

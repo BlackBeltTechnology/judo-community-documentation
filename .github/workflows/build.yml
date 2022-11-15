@@ -72,20 +72,31 @@ jobs:
           -Drevision=${{ steps.version.outputs.version }} \
           clean install
 
-      - name: Disable robots and crawlers
-        run: ./de-robot.sh
+#      - name: Disable robots and crawlers
+#        run: ./de-robot.sh
 
-#      - name: Auth
-#        uses: google-github-actions/auth@v0.4.0
-#        with:
-#          credentials_json: ${{ secrets.JUDO_DOCUMENTATION_GCP }}
-#
-#      - name: Upload
-#        uses: google-github-actions/upload-cloud-storage@v0.4.0
-#        with:
-#          path: build/
-#          parent: false
-#          destination: judo-documentation
+      - name: Auth
+        uses: google-github-actions/auth@v0.4.0
+        with:
+          credentials_json: ${{ secrets.JUDO_DOCUMENTATION_GCP }}
+
+      - name: Upload
+        uses: google-github-actions/upload-cloud-storage@v0.4.0
+        with:
+          path: build/
+          parent: false
+          destination: judo-community-documentation
+
+      - name: create-json
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: "gcp-token.json"
+          json: ${{ secrets.JUDO_DOCUMENTATION_GCP }}
+
+      - name: set mainfile in bucket
+        run: |-
+          gcloud auth activate-service-account --key-file=gcp-token.json
+          gsutil web set -m index.html gs://judo-community-documentation
 
       - name: Tag commit
         uses: tvdias/github-tagger@v0.0.1

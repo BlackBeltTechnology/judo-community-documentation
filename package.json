@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "test:local": "serve build",
     "install": "node post-install.js",
     "build-ui": "cd ui && npm install && npm run build",
     "generate": "npm run antora antora-playbook.yml",
@@ -18,5 +19,8 @@
     "antora-lunr": "0.8.0",
     "asciidoctor-kroki": "0.14.0",
     "fs-extra": "^10.0.0"
+  },
+  "devDependencies": {
+    "serve": "^14.0.1"
   }
 }
