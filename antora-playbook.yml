@@ -6,7 +6,7 @@ site:
 content:
   sources:
   - url: .
-    branches: [master, develop]
+    branches: [master, HEAD]
     version: true
     start_path: docs
 
