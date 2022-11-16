@@ -1,12 +1,12 @@
 site:
   title: JUDO Community
   url: https://documentation.judo.technology
-  start_page: ROOT:getting-started/introduction.adoc
+  start_page: ROOT:getting-started/00_introduction.adoc
 
 content:
   sources:
-  - url: https://github.com/BlackBeltTechnology/judo-community-documentation.git
-    branches: [master, develop]
+  - url: .
+    branches: HEAD
     version: true
     start_path: docs
 
