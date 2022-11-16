@@ -6,9 +6,7 @@ endif::[]
 :idprefix:
 :idseparator: -
 
-""
-The right choice of abstraction leads to more efficient development and better applications.
-""
+> The right choice of abstraction leads to more efficient development and better applications.
 
 The following chapters provide a theoretical background to JUDO. If you are not interested in these details, feel free to jump straight to the technical chapters.
 
