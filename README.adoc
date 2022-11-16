@@ -20,6 +20,15 @@ The `ui` folder contains the theming of the documentation and it's source code.
 By default the `mvn clean install` command runs the build process for it, but it is not mandatory if we are only working
 on the docs, and not the theme.
 
+**IMPORTANT!**
+
+The entry `build/index.html` file is copied by the `maven-resources-plugin` from `src/main/resources`.
+
+This file is necessary because for multi version documentations, Antora explicitly generates "Components", which are
+sub-folders under `build`.
+
+Antora does not generate any entry file "above" component folders, therefore we need to take care about it.
+
 **Ignoring ui builds:**
 
 ```bash
