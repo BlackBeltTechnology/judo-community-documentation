@@ -1,0 +1,124 @@
+name: Build Release
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ⏳ Build, test and deploy artifacts
+    runs-on: judong
+    timeout-minutes: 30
+    env:
+      SIGN_KEY_ID: ${{ secrets.GPG_KEYNAME }}
+      SIGN_KEY_PASS: ${{ secrets.GPG_PASSPHRASE }}
+      SIGN_KEY: ${{ secrets.GPG_SECRET_KEYS }}
+    if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: 🛠️ Project context
+        id: context
+        uses: zero88/gh-project-context@v1.1
+
+      - name: 🛠️ Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'zulu'
+
+      - name: 🔢 Get the current PR number
+        uses: jwalton/gh-find-current-pr@v1
+        id: current-pr
+        with:
+          state: open
+
+      - name: 🔥 Build with Maven
+        run: |-
+          ./mvnw -B -Dstyle.color=always \
+          -Drevision=${{ steps.version.outputs.version }} \
+          clean install
+
+      - name: Auth
+        if: |-
+          ${{ always() && 
+          (startsWith(github.head_ref, 'master') || github.ref == 'refs/heads/master') && 
+          job.status == 'success' }}
+        uses: google-github-actions/auth@v0.4.0
+        with:
+          credentials_json: ${{ secrets.JUDO_DOCUMENTATION_GCP }}
+
+      - name: Upload
+        if: |-
+          ${{ always() && 
+          (startsWith(github.head_ref, 'master') || github.ref == 'refs/heads/master') &&
+          job.status == 'success' }}
+        uses: google-github-actions/upload-cloud-storage@v0.4.0
+        with:
+          path: build/
+          parent: false
+          destination: judo-community-documentation
+
+      - name: create-json
+        if: |-
+          ${{ always() && 
+          (startsWith(github.head_ref, 'master') || github.ref == 'refs/heads/master') &&
+          job.status == 'success' }}
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: "gcp-token.json"
+          json: ${{ secrets.JUDO_DOCUMENTATION_GCP }}
+
+      - name: set mainfile in bucket
+        if: |-
+          ${{ always() && 
+          (startsWith(github.head_ref, 'master') || github.ref == 'refs/heads/master') &&
+          job.status == 'success' }}
+        run: |-
+          gcloud auth activate-service-account --key-file=gcp-token.json
+          gsutil web set -m index.html gs://judo-community-documentation
+
+      - name: 📌 Create version tag
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.OSS_PAT }}
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/v${{ steps.version.outputs.version }}',
+              sha: context.sha
+            })
+
+      - name: 🎤 Create message
+        id: message
+        if: ${{ always() }}
+        run: |-
+          if [ "${{ job.status }}" == "success" ]; then
+            message=":white_check_mark: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            message="${message} Version: ${{ steps.version.outputs.version }}"
+          fi
+          if [ "${{ job.status }}" == "failure" ]; then
+            message=":x: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"    
+          fi
+          if [ "${{ job.status }}" == "canceled" ]; then
+            message=":x: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"    
+          fi
+          echo "::set-output name=message::${message}"
+
+      - name: 📢 Send message to discord
+        uses: sarisia/actions-status-discord@v1
+        if: always()
+        with:
+          webhook: ${{ secrets.JUDONG_DISCORD_WEBHOOK }}
+          title: "Gitub action"
+          description: "${{ steps.message.outputs.message }}"
