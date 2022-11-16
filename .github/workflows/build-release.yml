@@ -42,6 +42,39 @@ jobs:
         with:
           state: open
 
+      - name: 🧹 Remove settings.xml
+        run: rm $HOME/.m2/settings.xml || true
+
+      - name: 🛠️ Setup maven settings.xml
+        uses: whelk-io/maven-settings-xml-action@v20
+        with:
+          servers: >
+            [
+                {
+                    "id": "judong-nexus-mirror",
+                    "username": "${{ secrets.JUDONG_NEXUS_USERNAME }}",
+                    "password": "${{ secrets.JUDONG_NEXUS_PASSWORD }}"
+                },
+                {
+                    "id": "judong-nexus-distribution",
+                    "username": "${{ secrets.JUDONG_NEXUS_USERNAME }}",
+                    "password": "${{ secrets.JUDONG_NEXUS_PASSWORD }}"
+                },
+                {
+                    "id": "ossrh",
+                    "username": "${{ secrets.SONATYPE_USERNAME }}",
+                    "password": "${{ secrets.SONATYPE_PASSWORD }}"
+                }
+            ]
+          mirrors: >
+            [
+                {
+                    "id": "judong-nexus-mirror",
+                    "mirrorOf": "*",
+                    "url": "https://nexus.judo.technology/repository/maven-judong/"
+                }
+            ]
+
       - name: 🔥 Build with Maven
         run: |-
           ./mvnw -B -Dstyle.color=always \
