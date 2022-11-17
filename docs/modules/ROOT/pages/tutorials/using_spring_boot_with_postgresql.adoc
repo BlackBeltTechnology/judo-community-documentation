@@ -29,7 +29,7 @@ docker run --name testdb \
 
 Located under: `pom.xml`
 
-In order to work with PostgreSQL we need to update our `pom.xml`:
+We need to add `postgresql` as a `runtime` dependency.
 
 [source,xml]
 ----
@@ -69,7 +69,7 @@ spring:
 
 [NOTE]
 ====
-The connection details are mirroring our database setup. Do not use these in a production setup!
+The connection details are mirroring our database setup. Do not use these in a production!
 ====
 
 == Re-run tests
