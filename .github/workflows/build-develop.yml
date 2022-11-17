@@ -120,18 +120,6 @@ jobs:
           gcloud auth activate-service-account --key-file=gcp-token.json
           gsutil web set -m index.html gs://judo-develop-documentation
 
-      - name: 📌 Create version tag
-        uses: actions/github-script@v5
-        with:
-          github-token: ${{ secrets.OSS_PAT }}
-          script: |
-            github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'refs/tags/v${{ steps.version.outputs.version }}',
-              sha: context.sha
-            })
-
       - name: 🎤 Create message
         id: message
         if: ${{ always() }}
