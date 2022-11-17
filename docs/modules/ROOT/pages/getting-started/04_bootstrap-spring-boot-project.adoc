@@ -21,8 +21,9 @@ test model and a simple integration test:
 mvn org.apache.maven.plugins:maven-archetype-plugin:3.1.1:generate -B \
   -DarchetypeGroupId=hu.blackbelt.judo.jsl \
   -DarchetypeArtifactId=judo-jsl-springboot-archetype \
-  -DarchetypeVersion=1.0.3 \
+  -DarchetypeVersion=1.0.4 \
   -DgroupId=com.example \
+  -DartifactId=test \
   -DmodelName=Test
 ----
 
@@ -35,19 +36,28 @@ Running `mvn clean install` under your project will run the build and tests as w
 
 == Bootstrapped sources
 
-=== application.properties
+=== application.yml
 
 Located under: `src/main/resources`
 
 This is a standard Spring Boot resource which by default is generated to utilize HSQL Database (we support PostgreSQL as well).
 
 ```
-spring.datasource.driver-class-name=org.hsqldb.jdbc.JDBCDriver
-spring.datasource.url=jdbc:hsqldb:mem:testdb;DB_CLOSE_DELAY=-1
-spring.datasource.username=sa
-spring.datasource.password=
-spring.liquibase.change-log=classpath:model/Test-liquibase_hsqldb.changelog.xml
-judo.modelName=Test
+spring:
+  main:
+    banner-mode: off
+  output:
+    ansi:
+      enabled: ALWAYS
+  datasource:
+    driver-class-name: org.hsqldb.jdbc.JDBCDriver
+    url: jdbc:hsqldb:mem:testdb;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  liquibase:
+    change-log: classpath:model/@judo-model-name@-liquibase_hsqldb.changelog.xml
+judo:
+  modelName: @judo-model-name@
 ```
 
 === Test.jsl
@@ -70,14 +80,14 @@ entity Person {
 }
 ----
 
-=== TestSpringApplication.java
+=== TestApplication.java
 
 Located under: `src/main/java/com/example/test`
 
 This is the entry point of a bare-bones Spring Boot Application similar to what you'd get if you'd have used the
 https://start.spring.io[start.spring.io] generator
 
-=== TestAppTests.java
+=== TestApplicationTests.java
 
 Located under: `src/test/java/com/example/test`
 
@@ -95,21 +105,23 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
-class TestSpringApplicationTests {
-    @Autowired
-    Person.PersonDao personDao;
+class TestApplicationTests {
 
-    @Test
-    void testDaoFunctions() {
-        Person createdPerson = personDao.create(Person.builder()
-                .withFirstName("FirstName")
-                .withLastName("LastName")
-                .build());
+	@Autowired
+	Person.PersonDao personDao;
 
-        assertEquals(Optional.of("FirstName"), createdPerson.getFirstName());
-        assertEquals(Optional.of("LastName"), createdPerson.getLastName());
-        // Test derived
-        assertEquals(Optional.of("FirstName LastName"), createdPerson.getFullName());
-    }
+	@Test
+	void testDaoFunctions() {
+		Person createdPerson = personDao.create(Person.builder()
+				.withFirstName("FirstName")
+				.withLastName("LastName")
+				.build());
+
+		assertEquals(Optional.of("FirstName"), createdPerson.getFirstName());
+		assertEquals(Optional.of("LastName"), createdPerson.getLastName());
+		// Test derived
+		assertEquals(Optional.of("FirstName LastName"), createdPerson.getFullName());
+	}
+
 }
 ----

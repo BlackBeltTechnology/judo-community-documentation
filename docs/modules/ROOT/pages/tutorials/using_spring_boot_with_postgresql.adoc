@@ -1,0 +1,82 @@
+= Using Spring Boot with PostgreSQL
+
+:idprefix:
+:idseparator: -
+
+== Prerequisites
+
+This tutorial builds on top of the xref:getting-started/04_bootstrap-spring-boot-project.adoc[] guide.
+
+Although it is not required to have te exact same setup, we will refer and highlight content from that guide.
+
+== Start a PostgreSQL instance
+
+In our case we will use https://docs.docker.com/[Docker], but it's not required.
+
+[source,bash]
+----
+docker run --name testdb \
+    -p 5432:5432 \
+    -e POSTGRES_DB=testdb \
+    -e POSTGRES_USER=postgres \
+    -e POSTGRES_PASSWORD=postgres \
+    -d postgres
+----
+
+== Update sources
+
+=== pom.xml
+
+Located under: `pom.xml`
+
+In order to work with PostgreSQL we need to update our `pom.xml`:
+
+[source,xml]
+----
+<dependencies>
+    <!-- ... -->
+    <!-- Add postgresql -->
+    <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+<dependencies>
+----
+
+=== application.yml
+
+Located under: `src/main/resources/application.yml`
+
+We need to modify the following sections:
+
+- `spring.datasource`
+- `spring.liquibase.change-log`
+
+[source,yaml]
+----
+spring:
+  # ...
+  datasource:
+    driver-class-name: org.postgresql.Driver # update the driver class name
+    url: jdbc:postgresql://localhost:5432/testdb # update the database url
+    username: postgres # update username
+    password: postgres # update password
+  liquibase:
+    change-log: classpath:model/@judo-model-name@-liquibase_postgresql.changelog.xml # use the generated postgresql-specific changelog
+# ...
+----
+
+[NOTE]
+====
+The connection details are mirroring our database setup. Do not use these in a production setup!
+====
+
+== Re-run tests
+
+After we are done with all the above, we should be able to run our tests against our PostgreSQL instance.
+
+[souce,bash]
+----
+mvn clean install
+----
