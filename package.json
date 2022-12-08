@@ -13,7 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "antora-lunr": "^0.8.0",
+    "@antora/lunr-extension": "^1.0.0-alpha.8",
     "asciidoctor-kroki": "^0.16.0",
     "fs-extra": "^10.1.0"
   },
