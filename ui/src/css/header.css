@@ -283,3 +283,16 @@ img.github-link {
   margin-right: 10px;
   width: 15px;
 }
+
+div.navbar-item.search {
+  width: 100%;
+}
+
+div.navbar-item.search > input {
+  width: 100%;
+}
+
+div.search-result-item span.search-result-highlight {
+  color: var(--color-judo-orange);
+  background: rgba(231, 80, 29, 0.1);
+}
