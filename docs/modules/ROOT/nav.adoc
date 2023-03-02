@@ -12,6 +12,7 @@
 * xref:meta-jsl:04_types.adoc[Types]
 * xref:meta-jsl:05_entity.adoc[Entity]
 * xref:meta-jsl:06_expression.adoc[Expression]
+* xref:meta-jsl:07_service.adoc[Service]
 
 ////
 .Database
