@@ -16,7 +16,7 @@ Like it or not, everything is speeding up in our world today. The accelerated pa
 
 As a developer, we know that creating high-quality applications takes a lot of thought and, most importantly, time. This is in stark contrast to the time pressure on developers. In addition to the fact that traditional manual coding takes too much time from developers, the risk of unwanted human error remains quite high.
 
-The pressure of time lead to poor quality applications and missed deadlines. There is a growing demand for innovative solutions that speed up the entire software development process while also improving the quality of the result.
+The pressure of time leads to poor quality applications and missed deadlines. There is a growing demand for innovative solutions that speed up the entire software development process while also improving the quality of the result.
 
 == Level of abstraction
 

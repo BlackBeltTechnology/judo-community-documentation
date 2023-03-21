@@ -39,7 +39,7 @@ Installing the JSL DSL plugin in Eclipse:
 
 === First time setup
 
-When we first create a `.jsl` file, Eclipse will bring up a prompt "Configure Xtext".
+When we first create a `.jsl` file, Eclipse will bring up a prompt for us to configure the project as Xtext.
 
 In this prompt check the btn:[Remember my decision] option and click btn:[Yes].
 
