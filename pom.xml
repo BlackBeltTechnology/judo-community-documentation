@@ -2,13 +2,14 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>hu.blackbelt.judo</groupId>
     <artifactId>judo-community-documentation</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>bundle</packaging>
 
     <name>JUDO Community Documentation</name>
     <description>Documentation for the JUDO Community Projects</description>
 
     <properties>
+        <revision>1.0.0-SNAPSHOT</revision>
         <maven>3.8.3</maven>
 
         <maven.compiler.source>11</maven.compiler.source>
