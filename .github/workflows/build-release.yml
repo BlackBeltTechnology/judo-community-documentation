@@ -1,4 +1,4 @@
-name: Build Release
+name: JUDO Documentation Release
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
       - name: ⬇️ Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 2
 
       - name: 🛠️ Project context
         id: context
@@ -72,29 +72,42 @@ jobs:
                     "id": "judong-nexus-mirror",
                     "mirrorOf": "*",
                     "url": "https://nexus.judo.technology/repository/maven-judong/"
-                }
+                 }
             ]
 
-      - name: 🔥 Build with Maven
+      - name: 🔢 Calculate version number
+        id: version
+        run: |-
+          POM_VERSION=$(./mvnw org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dtycho.mode=maven -DskipModules=true -Dexpression=project.version -q -DforceStdout)
+          if [[ "${POM_VERSION}" == *-SNAPSHOT ]]; then
+            BASE_VERSION=$(echo "${POM_VERSION}" | cut -d'-' -f 1)
+          else
+            BASE_VERSION=${POM_VERSION}
+          fi
+          if [[ "${{ github.base_ref }}" == "master" ]]; then
+            VERSION_NUMBER=${BASE_VERSION}
+          else
+            TAG_NAME=$(echo "${{ steps.context.outputs.branch }}" | cut -d ' ' -f2 | tr '#\/\.-' '_')
+            VERSION_NUMBER=${BASE_VERSION}.$(date +%Y%m%d_%H%M%S)_${{ steps.context.outputs.shortCommitId }}_${TAG_NAME//[(\)]}
+          fi
+          echo "Version from POM: ${POM_VERSION}"
+          echo "Base version from POM: ${BASE_VERSION}"
+          echo "Building version: ${VERSION_NUMBER}"
+          echo "version=${VERSION_NUMBER}" >> $GITHUB_OUTPUT
+
+      # Phase 1 - Build and deploy to judong nexus
+      - name: 🔥 Build with Maven (build, test)
         run: |-
           ./mvnw -B -Dstyle.color=always \
           -Drevision=${{ steps.version.outputs.version }} \
           clean install
 
       - name: Auth
-        if: |-
-          ${{ always() && 
-          (startsWith(github.head_ref, 'master') || github.ref == 'refs/heads/master') && 
-          job.status == 'success' }}
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.JUDO_DOCUMENTATION_GCP }}
 
       - name: Upload
-        if: |-
-          ${{ always() && 
-          (startsWith(github.head_ref, 'master') || github.ref == 'refs/heads/master') &&
-          job.status == 'success' }}
         uses: google-github-actions/upload-cloud-storage@v1
         with:
           path: build/
@@ -103,10 +116,6 @@ jobs:
           concurrency: 10
 
       - name: create-json
-        if: |-
-          ${{ always() && 
-          (startsWith(github.head_ref, 'master') || github.ref == 'refs/heads/master') &&
-          job.status == 'success' }}
         uses: jsdaniell/create-json@1.1.2
         with:
           name: "gcp-token.json"
@@ -118,14 +127,41 @@ jobs:
           version: '>= 363.0.0'
 
       - name: set mainfile in bucket
-        if: |-
-          ${{ always() && 
-          (startsWith(github.head_ref, 'master') || github.ref == 'refs/heads/master') &&
-          job.status == 'success' }}
         run: |-
           gcloud auth activate-service-account --key-file=gcp-token.json
           gsutil web set -m index.html gs://judo-community-documentation
 
+      - name: 📌 Create version tag
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.OSS_PAT }}
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/v${{ steps.version.outputs.version }}',
+              sha: context.sha
+            })
+
+      - name: 🏗️ Build Changelog
+        id: create_changelog
+        uses: mikepenz/release-changelog-builder-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          toTag: v${{ steps.version.outputs.version }}
+
+      - name: 📖 Create release
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: v${{ steps.version.outputs.version }}
+          tag: v${{ steps.version.outputs.version }}
+          generateReleaseNotes: false
+          body: ${{steps.create_changelog.outputs.changelog}}
+          draft: false
+          prerelease: true
+            
       - name: 🎤 Create message
         id: message
         if: ${{ always() }}
