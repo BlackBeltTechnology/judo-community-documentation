@@ -95,12 +95,32 @@ jobs:
           echo "Building version: ${VERSION_NUMBER}"
           echo "version=${VERSION_NUMBER}" >> $GITHUB_OUTPUT
 
+##########################
+# MAVEN BUILD START
+##########################
+
       # Phase 1 - Build and deploy to judong nexus
       - name: 🔥 Build with Maven (build, test)
         run: |-
           ./mvnw -B -Dstyle.color=always \
           -Drevision=${{ steps.version.outputs.version }} \
-          clean install
+          -Psign-artifacts \
+          -Prelease-judong \
+          deploy
+
+      # Phase 2 - Build and deploy to maven central
+      - name: 🎁 Deploy with Maven (central)
+        run: |-
+          ./mvnw -B -Dstyle.color=always \
+          -Drevision=${{ steps.version.outputs.version }} \
+          -DdeployOnly \
+          -P"release-central,sign-artifacts,-verify-feature" \
+          -Dmaven.test.skip=true \
+          deploy
+
+##########################
+# MAVEN BUILD END
+##########################
 
       - name: Auth
         uses: google-github-actions/auth@v1
