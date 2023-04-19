@@ -27,6 +27,9 @@
       'scale',
       'min-size',
       'max-size',
+      'maps',
+      'reads',
+      'choices',
     ]
 
     var TYPES = [
@@ -56,6 +59,16 @@
       'type',
       'error',
       'enum',
+      'transfer',
+      'constructor',
+      'actor',
+      'service',
+      'function',
+      'exports',
+      'guard',
+      'realm',
+      'claim',
+      'identity',
     ]
 
     var KEYWORDS = {
@@ -64,6 +77,17 @@
       type: TYPES,
       literal: LITERALS,
       built_in: BUILT_INS,
+    }
+
+    const ANNOTATION = {
+      className: 'meta',
+      begin: '@[a-zA-Z][a-zA-Z0-9]*',
+      contains: [
+        {
+          begin: /\(/,
+          end: /\)/,
+        },
+      ],
     }
 
     return {
@@ -75,6 +99,7 @@
         hljs.BACKSLASH_ESCAPE,
         hljs.C_LINE_COMMENT_MODE,
         hljs.C_BLOCK_COMMENT_MODE,
+        ANNOTATION,
         {
           className: 'semicolon',
           begin: ';',
