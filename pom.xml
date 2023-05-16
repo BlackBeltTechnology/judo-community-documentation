@@ -12,8 +12,8 @@
         <revision>1.0.0-SNAPSHOT</revision>
         <maven>3.8.3</maven>
 
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
 
         <frontend-maven-plugin-version>1.12.0</frontend-maven-plugin-version>
         <maven-clean-plugin-version>3.2.0</maven-clean-plugin-version>
