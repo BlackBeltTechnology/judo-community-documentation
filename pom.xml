@@ -23,8 +23,8 @@
         <node-version>v18.12.1</node-version>
         <npm-version>9.1.1</npm-version>
 
-        <judo-meta-jsl-version>1.0.3.20230629_164506_10717dc9_develop</judo-meta-jsl-version>
-        <judo-tatami-jsl-version>1.1.4.20230630_040722_4c0cc912_develop</judo-tatami-jsl-version>
+        <judo-meta-jsl-version>1.0.3.20230630_130646_28101cfb_develop</judo-meta-jsl-version>
+        <judo-tatami-jsl-version>1.1.4.20230701_040734_1e741dca_develop</judo-tatami-jsl-version>
     </properties>
 
     <dependencies>
