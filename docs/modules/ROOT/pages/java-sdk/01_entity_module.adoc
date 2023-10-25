@@ -12,7 +12,7 @@ paths tools like ours usually take from an architecture point of view:
 JUDO could be considered as an ORM.
 
 == Context
-
+// TODO  check the link is correct
 In this documentation we will take the same example model as what we have in the xref:meta-jsl:01_intro.adoc[Introduction,window=_blank]
 section of the JSL documentation.
 
@@ -139,7 +139,6 @@ enum OrderStatus {
 entity Order {
     field required OrderStatus status default: OrderStatus#OPEN;
     field Integer price default: 1500;
-    // ...
 }
 ----
 
@@ -181,7 +180,7 @@ void testFetch() {
 ----
 
 The `.getById()` method in most cases should be used when we would like to fetch an updated version of an entity for which
-we already have a reference to.
+we already have a reference to. The return type is Optional because the entity may not exist in the database.
 
 **Fetching every Address entity in the database:**
 
@@ -217,11 +216,9 @@ void testQuery() {
 }
 ----
 
-Every DAO has a `.query()` method which is a builder.
+Every DAO has a `.query()` method which is a QueryCustomizer. It is a builder, and you can customize which entities you want to query.
 
-This builder will have `.filter()` methods on it based on the corresponding fields of each Entity.
-
-Additionally, to filters, we support a `.limit()` method as well, where you may define how many elements you'd like to fetch.
+This builder will have `.filter()` methods on it based on the corresponding fields of each Entity. You can filter primitive fields and primitive calculated members as well.
 
 Sorting can be achieved by adding the `.orderBy()` or `.orderByDescending()` method calls to the builder, and providing
 the field which we would like to use.
@@ -233,9 +230,15 @@ Multiple fields may be used for sorting and filtering as well.
 
 As a last step, every query must be fired by calling the `.execute()` method.
 
-// TODO rewrite the limit and execute part.  (offset)
+The `execute` method can be used in various ways :
+
+ * Without parameter `.execute()`, you will gain all elements, that satisfy the query critics.
+ * With one parameter `.execute(Integer limit)`, you can define how many elements you'd like to fetch.
+ * With two parameter `.execute(Integer limit, Integer offset)`, you can define an offset to specify how many elements you'd like to skip.
 
 __The return type is always a List.__
+
+If you don't need the instances of the entity, only the count of the fitted entities, you can use the `count` methods.
 
 **Counting every Address entity in the database:**
 
@@ -258,7 +261,7 @@ void testAll() {
 AddressDao addressDao;
 
 @Test
-void testQuery() {
+void testCount() {
     Long numberOfAddressInBudapest = addressDao.query()
             .filterByCity(StringFilter.equalTo("Budapest"))
             .orderBy(AddressAttribute.CITY) // or
@@ -266,8 +269,6 @@ void testQuery() {
             .count();
 }
 ----
-
-// TODO explain the count method
 
 === Entity Updates
 
@@ -287,8 +288,11 @@ void testUpdate() {
     );
 
     address.setCity("Oslo");
+    // in the database the city still "Budapest"
 
     address = addressDao.update(address);
+    // in the database now also "Oslo"
+
 }
 ----
 
@@ -305,7 +309,7 @@ Currently, we support two types of validation concepts:
 
 * `required` modifiers
 * type-based validations
-
+// TODO  check the link is correct
 To understand how to use the `required` modifier, please check the xref:meta-jsl:05_entity.adoc#primitive-fields[Primitive Fields,window=_blank]
 section of our documentation
 
@@ -381,7 +385,7 @@ by developers to prevent them from being used in parts of the code where it coul
 
 In JUDO Entities may inherit or "subclass" any number of Entities. Consistency is ensured by the toolbox in a way where
 if there are colliding members, the transformation will throw an error.
-
+// TODO  check the link is correct
 This concept is explained in great detail in the xref:meta-jsl:05_entity.adoc#inheritance[Inheritance,window=_blank]
 section of the JSL DSL docs.
 
@@ -417,14 +421,17 @@ PersonDao personDao;
 @Test
 void testInheritance() {
     Person johnPerson = personDao.create(Person.builder()
+            .withFirstName("John")
+            .withLastName("Doe")
             .withEmail("john@doe.com")
             .withAddress(Address.builder()
+                    .withStreet("Rose")
                     .withCity("Budapest")
                     .build()
             ).build()
     );
 
-    List<Order> ordersForJohn = personDao.queryOrders(johnPerson).execute(); //this is an empty list now
+    List<Order> ordersForJohn = personDao.queryOrders(johnPerson).execute();
 
     String city = johnPerson.getAddress().getCity();
 }
@@ -434,12 +441,53 @@ void testInheritance() {
 In this example you may notice that the list of Orders is queried through the `personDao`. The logic behind this will be
 explained in great detail in the next sections.
 
+=== AdaptTo
+You can get the ancestors representation of the Person entity if you need it. Use the `adaptTo(Class<T> target)` method.
+
+This method cast the actual element to the target class.
+
+For example :
+
+Each DAO has its own Identifier class, so if you want to use the CustomerDAO to retrieve a Person as a Customer, you'll need to adapt them.
+
+[source,java]
+----
+@Autowired
+AddressDao addressDao;
+
+@Autowired
+PersonDao personDao;
+
+@Autowired
+UserDao userDao;
+
+@Test
+void testAdaptTo() {
+
+    Optional<Customer> johnDoAsACustomer = customerDao.getById(johnPerson.adaptTo(Customer.class).identifier());
+    assertTrue(johnDoAsACustomer.isPresent());
+
+    Optional<User> johnDoAsAUser = userDao.getById(johnPerson.adaptTo(User.class).identifier());
+    assertTrue(johnDoAsAUser.isPresent());
+
+    // Always will be empty
+    Optional<Address> johnDoAsAAddres = addressDao.getById(johnPerson.adaptTo(Address.class).identifier());
+    assertEquals(Optional.empty(), johnDoAsAAddres);
+
+}
+----
+
+[IMPORTANT]
+Only use this method if there is an inherited relation between the entities.
+
 == Abstract Entity
 
 The `abstract` modifier has the following effect on entities and DAOs:
 
 * Entities are **not** instantiable via Java code
 * Corresponding DAOs do not have a `.create(/* ... */)` method on them
+
+__ You can notice the generated DAO for the Customer entity does not contain the create method. __
 
 == Entity Members
 
@@ -448,7 +496,7 @@ The following members can be declared for each Entity:
 * fields
 * identifiers
 * relations
-* derived members
+* calculated members
 * queries
 
 === Fields
@@ -457,7 +505,7 @@ There are two types of `fields`:
 
 * Primitive
 * Composite
-
+// TODO  check the link is correct
 Before continuing, make sure you double-check the corresponding xref:meta-jsl:05_entity.adoc#composition[Composition,window=_blank]
 section in the JSL DSL docs understand the reason behind this split.
 
@@ -480,7 +528,6 @@ entity Order {
 
 Managing the fields `status` and `orderItems` is done directly on the `Order` instance:
 
-// TODO need to rewrite because the composition have a required relation
 [source,java]
 ----
 @Autowired
@@ -502,9 +549,13 @@ void testFields() {
             OrderAttachedRelationsForCreate.builder().withCustomer(johnCustomer.get()).build()
     );
 
-    orderDao.createOrderItems(order, List.of(OrderItem.builder().withAmount(50).build()),
-            List.of(OrderItemAttachedRelationsForCreate.builder().withProduct(butter).build()));
+    orderDao.createOrderItems(
+            order,
+            List.of(OrderItem.builder().withAmount(50).build()),
+            List.of(OrderItemAttachedRelationsForCreate.builder().withProduct(butter).build())
+    );
 
+    // refresh the order instance after the creation
     order = orderDao.getById(order.identifier()).get();
 
     order.getOrderItems().get(0).setAmount(300);
@@ -526,6 +577,9 @@ entity with a field, or fields which may contain multiple hundreds or thousands 
 In such cases it is advised to use "relations" instead.
 ====
 
+// TODO Deep copy explanation
+
+
 === Identifiers
 
 Identifiers are similar to fields, but can only be primitive types.
@@ -541,11 +595,25 @@ entity User {
     identifier required Email email;
 }
 ----
+[source,java]
+----
 
+@Autowired
+UserDao userDao;
+
+@Test
+void testIdentifier() {
+
+    User user1 = userDao.create(User.builder().withEmail("same@mail.com").build());
+    // Will throw ValidationException because the email is not unique
+    User user2 = userDao.create(User.builder().withEmail("same@mail.com").build());
+
+}
+----
 In this scenario, every `User` will have different `email` attributes, enforced by the architecture.
 
 === Relations
-
+// TODO  check the link is correct
 Before continuing, make sure you double-check the corresponding xref:meta-jsl:05_entity.adoc#relations[Relations,window=_blank]
 section in the JSL DSL docs.
 
@@ -604,7 +672,7 @@ void testRelations() {
 
 As we can see, the `orders` relation can only be queried via the `Person` entity's `PersonDao`.
 
-// TODO explain attachments
+When creating an entity with relations, you attach it using the `PersonAttachedRelationsForCreate`. This builder contains all the relations that the Person entity has, including the inherited ones.
 
 The reason why the lifecycle is split for fields and relations is based on historical experience managing these two
 concepts.
@@ -628,7 +696,7 @@ entity OrderItem {
 }
 
 entity Customer {
-    relation OrderItem favouriteItem;
+    relation required OrderItem favouriteItem;
     // ...
 }
 ----
@@ -880,7 +948,7 @@ void testDerived() {
 ----
 
 Derived members are not limited to primitive types!
-
+// TODO  check the link is correct
 You may find a detailed description of the expression syntax for derived members in the xref:meta-jsl:05_entity.adoc#derived-members[Derived members,window=_blank]
 section of the JSL DSL documentation.
 
