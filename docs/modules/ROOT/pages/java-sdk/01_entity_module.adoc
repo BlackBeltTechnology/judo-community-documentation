@@ -577,8 +577,9 @@ entity with a field, or fields which may contain multiple hundreds or thousands 
 In such cases it is advised to use "relations" instead.
 ====
 
-// TODO Deep copy explanation
 
+
+// TODO Deep copy explanation
 
 === Identifiers
 
@@ -699,6 +700,10 @@ entity Customer {
     relation required OrderItem favouriteItem;
     // ...
 }
+
+entity Person extends Customer, User {
+    // ...
+}
 ----
 
 Going with this setup the `CustomerDao` will contain the following methods (besides CRUD methods):
@@ -716,7 +721,7 @@ void testOneWay() {
         .build()
     );
 
-    // new CustomerDAO APIs:
+    // new PersonDAO APIs:
     Optional<OrderItem> favouriteItem = personDao.queryFavouriteItem(johnPerson); // Optional empty
     personDao.createFavouriteItem(
             johnPerson,
@@ -726,13 +731,10 @@ void testOneWay() {
 }
 ----
 
-// TODO
 [IMPORTANT]
 ====
-setFavourite can only set exsistent Order elements.
-----
-customerDao.setFavouriteItem(johnCustomer, OrderItem.builder().withAmount(150).build());
-----
+The `.setFavourite()` can only set existing Order elements.
+
 ====
 
 **Two way:**
@@ -756,8 +758,6 @@ entity Order {
 
 Modeling the two entities this way, the resulting DAO APIs are extended to contain the following methods:
 
-
-// TODO need to rewrite because the composition have a required relation
 [source,java]
 ----
 @Autowired
@@ -769,8 +769,9 @@ CustomerDao customerDao;
 @Autowired
 OrderDao orderDao;
 
+@Test
 void testTwoWay() {
-    Product butter = productDao.create(Product.builder().withName("Master Butter").withPrice(2).build());
+    Product butter = productDao.create(Product.builder().withName("Butter").withPrice(2).build());
     Person johnPerson = personDao.create(Person.builder()
             .withFirstName("John")
             .withLastName("Doe")
@@ -782,7 +783,7 @@ void testTwoWay() {
             ).build()
     );
 
-    // new CustomerDAO APIs:
+    // new PersonDAO APIs:
     personDao.createOrders(johnPerson, List.of(/* ... */));
     personDao.addOrders(johnPerson, List.of(/* ... */));
     personDao.removeOrders(johnPerson, List.of(/* ... */));
@@ -827,6 +828,7 @@ The resulting `OrderDao` API will contain the following additional methods:
 @Autowired
 ProductDao productDao;
 
+@Test
 void testOppositeAdd() {
     Product chainsaw = productDao.create(Product.builder().withName("Master Chainsaw").withPrice(1500).build());
 
@@ -853,7 +855,7 @@ entity Person {
 
 The following methods will be generated:
 
-* `Person getBestFriend(Person object)` // TODO not valid query
+* `Person queryBestFriend(Person object)` return type `Optional<Person>`
 * `void setBestFriend(Person object, Person relatedObject)`
 * `void unsetBestFriend(Person object)`
 
@@ -870,7 +872,7 @@ entity Person {
 
 The following methods will be generated:
 
-* `Animal getPet(Person object)` // TODO not valid query
+* `Animal queryPet(Person object)` return type `Person`
 * `void setPet(Person object, Animal relatedObject)`
 
 In case of `required` relations, DAOs will not contain an `unset` method.
@@ -888,10 +890,14 @@ entity Person {
 
 The following methods will be generated:
 
-* `List<Order> getOrders(Person object)`
-* `List<Order> createOrders(Person object, List.of(/* ... */))`
+* `List<Order> createOrders(Person object, List.of(/* Orders */))`
+* `Order createOrders(Person object, Order relatedObject)`
+* `List<Order> createOrders(Person object, List.of(/* Orders */), List.of(/* OrderAttachedRelations */))`)`
+* `Order createOrders(Person object, Order relatedObject, OrderAttachedRelationsForCreate attachedObject)`
 * `void addOrders(Person object, List.of(/* ... */))`
+* `void addOrders(Person object, Order relatedObject)`
 * `void removeOrders(Person object, List.of(/* ... */))`
+* `void removeOrders(Person object, Order relatedObject)`
 * `QueryCustomizer queryOrders(Person object)`
 
 The main difference between `createOrders` and `addOrders` is that `createOrders` explicitly creates not yet persisted
