@@ -12,7 +12,6 @@ paths tools like ours usually take from an architecture point of view:
 JUDO could be considered as an ORM.
 
 == Context
-// TODO  check the link is correct
 In this documentation we will take the same example model as what we have in the xref:meta-jsl:01_intro.adoc[Introduction,window=_blank]
 section of the JSL documentation.
 
@@ -309,8 +308,7 @@ Currently, we support two types of validation concepts:
 
 * `required` modifiers
 * type-based validations
-// TODO  check the link is correct
-To understand how to use the `required` modifier, please check the xref:meta-jsl:05_entity.adoc#primitive-fields[Primitive Fields,window=_blank]
+To understand how to use the `required` modifier, please check the xref:meta-jsl:05_entity.adoc#primitive-field[Primitive Fields,window=_blank]
 section of our documentation
 
 **Example:**
@@ -385,7 +383,7 @@ by developers to prevent them from being used in parts of the code where it coul
 
 In JUDO Entities may inherit or "subclass" any number of Entities. Consistency is ensured by the toolbox in a way where
 if there are colliding members, the transformation will throw an error.
-// TODO  check the link is correct
+
 This concept is explained in great detail in the xref:meta-jsl:05_entity.adoc#inheritance[Inheritance,window=_blank]
 section of the JSL DSL docs.
 
@@ -505,7 +503,7 @@ There are two types of `fields`:
 
 * Primitive
 * Composite
-// TODO  check the link is correct
+
 Before continuing, make sure you double-check the corresponding xref:meta-jsl:05_entity.adoc#composition[Composition,window=_blank]
 section in the JSL DSL docs understand the reason behind this split.
 
@@ -577,8 +575,6 @@ entity with a field, or fields which may contain multiple hundreds or thousands 
 In such cases it is advised to use "relations" instead.
 ====
 
-
-
 // TODO Deep copy explanation
 
 === Identifiers
@@ -614,7 +610,7 @@ void testIdentifier() {
 In this scenario, every `User` will have different `email` attributes, enforced by the architecture.
 
 === Relations
-// TODO  check the link is correct
+
 Before continuing, make sure you double-check the corresponding xref:meta-jsl:05_entity.adoc#relations[Relations,window=_blank]
 section in the JSL DSL docs.
 
@@ -933,41 +929,88 @@ The `fullName` attribute's value is not persisted in the database, but calculate
 PersonDao personDao;
 
 @Test
-void testDerived() {
-        personDao.create(Person.builder()
-                .withFirstName("John")
-                .withLastName("Doe")
-                .withEmail("john@doe.com")
-                .withAddress(Address.builder()
-                        .withCity("Budapest")
-                        .withStreet("Rose")
-                        .build()
-                ).build()
-        );
+void testCalculatedMembers() {
+    personDao.create(Person.builder()
+            .withFirstName("John")
+            .withLastName("Doe")
+            .withEmail("john@doe.com")
+            .withAddress(Address.builder()
+                    .withCity("Budapest")
+                    .withStreet("Rose")
+                    .build()
+            ).build()
+    );
 
-        List<Person> persons = personDao.query()
-                .filterByEmail(StringFilter.equalTo("john@doe.com"))
-                .execute();
+    List<Person> persons = personDao.query()
+            .filterByEmail(StringFilter.equalTo("john@doe.com"))
+            .execute();
 
-        assertEquals(Optional.of("John Doe"), persons.get(0).getFullName());
+    persons.get(0).setFirstName("Johny");
+    // the calculated member didn't changed
+    assertEquals(Optional.of("John Doe"), persons.get(0).getFullName());
+
+    // refresh person calculated fields
+    Person person = personDao.update(persons.get(0));
+    assertEquals(Optional.of("Johny Doe"), person.getFullName());
 }
 ----
 
-Derived members are not limited to primitive types!
+Calculated members are not limited to primitive types!
 // TODO  check the link is correct
-You may find a detailed description of the expression syntax for derived members in the xref:meta-jsl:05_entity.adoc#derived-members[Derived members,window=_blank]
+You may find a detailed description of the expression syntax for calculated members in the xref:meta-jsl:05_entity.adoc#calculated-members[Calculated members,window=_blank]
 section of the JSL DSL documentation.
 
-// TODO add example for calculated member which type is entity
+=== Fetching
+
+You can influence the behavior of a field or a relation. You have the flexibility to fetch a field like a relation, or vice versa.
+For more information, you can refer to the xref:meta-jsl:05_entity.adoc#fetching-strategy[Fetching strategy,window=_blank] section.
+
+**For example:**
+[source,jsl]
+----
+entity OrderItem {
+    //TODO this is required
+	relation required Product product opposite-add: orderItems[] eager: true;
+	field required Integer amount;
+	field String productName <= self.product.name eager: false;
+	field Integer price <= self.amount * self.product.price;
+}
+
+entity Product {
+	identifier required String name;
+	field required Integer price;
+}
+----
+[source, java]
+----
+
+@Autowired
+ProductDao productDao;
+
+@Autowired
+OrderItemDao orderItemDao;
+
+@Test
+public void testFetch() {
+
+    Product product = productDao.create(Product.builder().withName("Butter").withPrice(3).build());
+
+    OrderItem orderItem = orderItemDao.create(OrderItem.builder().withAmount(20).withProduct(product).build());
+
+    assertEquals("Butter", orderItem.getProduct().getName());
+    assertEquals("Butter",orderItemDao.queryProductName(orderItem).get());
+
+}
+----
+
 
 === Instance Query
 
 Queries are dynamic capabilities of Entities. They let the modeler create dynamic functions/methods which can return values
 for entity instances at runtime.
 
-Main differences distinguishing `derived` members from `queries` from an SDK point of view:
+Main differences distinguishing `calculated` members from `queries` from an SDK point of view:
 
-// TODO check this is valid
 [options="header"]
 |======================================================================
 |Property                               | derived   | query
@@ -1000,16 +1043,17 @@ entity Lead {
 
 entity SalesPerson extends Person {
     relation Lead[] leads opposite: salesPerson;
-    @Query
-    relation Lead[] leadsOver(Integer limit = 100) <= self.leads!filter(lead | lead.value > limit);
     relation Lead[] leadsOver10 <= self.leadsOver(limit = 10);
     // ...
 }
+
+query Lead[] leadsOver(Integer limit = 100) on SalesPerson <= self.leads.filter(lead | lead.value > limit);
+
 ----
 
 One of the many neat aspects of queries is the ability for them to be composed into other entity members.
 
-In the example above, we should notice the use of the `derived` field `leadsOver10` utilizing the `leadsOver` query.
+In the example above, we should notice the use of the `calculated` field `leadsOver10` utilizing the `leadsOver` query.
 
 The corresponding Java SDK should look like the following:
 
@@ -1017,33 +1061,39 @@ The corresponding Java SDK should look like the following:
 ----
 
 @Autowired
-SalesPerson.SalesPersonDao salesPersonDao;
+SalesPersonDao salesPersonDao;
 
 @Test
 void testQuery() {
-    SalesPerson createdSalesPerson = salesPersonDao
-        .create(SalesPerson.builder()
-            .withFirstName("Super")
-            .withLastName("Person")
-            .build()
-        );
+    SalesPerson createdSalesPerson = salesPersonDao.create(SalesPerson.builder()
+                    .withFirstName("Super")
+                    .withLastName("Person")
+                    .withEmail("super.person@mail.com")
+                    .withAddress(Address.builder().withStreet("Rose").withCity("Budapest").build())
+                    .build()
+            );
 
     List<Lead> leadsOver = salesPersonDao
-        .queryLeadsOver(createdSalesPerson, _SalesPerson_leadsOver_Parameters.builder()
-            .withLimit(200) // explicit definition of "limit" to have value of 200 instead of the default 100
-            .build()
-        )
-        .execute();
+            .queryLeadsOver(createdSalesPerson, SalesPersonLeadsOverParameter.builder()
+                    .withLimit(200) // explicit definition of "limit" to have value of 200 instead of the default 100
+                    .build()
+            )
+            .execute();
 
-    List<Lead> leadsOver10 = salesPersonDao.getLeadsOver10(createdSalesPerson);
-}
+    List<Lead> leadsOver10 = salesPersonDao.queryLeadsOver10(createdSalesPerson).execute();
 ----
+
+The query's return depends on the JSL types:
+
+  *  Primitive queries will return the primitive type representation.
+  *  Single-entity queries will return an Optional within the Entity class.
+  *  List-entity queries will return a QueryCustomizer.
 
 == Static Query
 
 Since static queries are defined on a root level of our models, they are considered special. They cannot be directly tied
-to entities, therefore they cannot be generated on entity prefixes/namespaces (e.g.: `Lead.LeadDao`). Every static query
-defined in our model will manifest a dedicated DAO (e.g.: `TotalNumberOfLeads.TotalNumberOfLeadsDao`).
+to entities, therefore they cannot be generated on entity prefixes/namespaces (e.g.: `LeadDao`). Every static query
+defined in our model will manifest a dedicated DAO (e.g.: `TotalNumberOfLeadsDao`).
 
 **Example:**
 
@@ -1051,11 +1101,11 @@ defined in our model will manifest a dedicated DAO (e.g.: `TotalNumberOfLeads.To
 ----
 model QueryModel;
 
-type numeric Integer(precision = 9, scale = 0);
+type numeric Integer precision : 9 scale : 0;
 
-query Integer totalNumberOfLeads() => Lead!size();
-query Lead[] rootAllLeadsBetween(Integer min = 0, Integer max = 100) => Lead!filter(l | l.value > min and  l.value < max);
-query Integer rootCountAllLeadsBetween(Integer min = 0, Integer max = 100) => Lead!filter(l | l.value > min and  l.value < max)!size();
+query Integer totalNumberOfLeads() <= Lead!all()!size();
+query Lead[] rootAllLeadsBetween(Integer min = 0, Integer max = 100) <= Lead!filter(l | l.value > min and  l.value < max);
+query Integer rootCountAllLeadsBetween(Integer min = 0, Integer max = 100) <= Lead!filter(l | l.value > min and  l.value < max)!size();
 
 entity Lead {
 	field Integer value;
@@ -1066,22 +1116,22 @@ Depending on the return types, and the existence or absence of parameters, the g
 
 === Parameterless Static Query
 
-Parameterless static queries are generated on their corresponding dedicated DAOs as methods with a prefix of "get".
+Parameterless static queries are generated on their corresponding dedicated DAOs and contains an `.execute()` method.
 
 [source,java]
 ----
 @Autowired
-TotalNumberOfLeads.TotalNumberOfLeadsDao totalNumberOfLeadsDao;
+TotalNumberOfLeadsDao totalNumberOfLeadsDao;
 
 @Autowired
-Lead.LeadDao leadDao;
+LeadDao leadDao;
 
 @Test
 public void testStaticQuery() {
     leadDao.create(Lead.builder().withValue(50).build());
     leadDao.create(Lead.builder().withValue(175).build());
 
-    assertEquals(2, totalNumberOfLeadsDao.getTotalNumberOfLeads());
+    assertEquals(2, totalNumberOfLeadsDao.execute());
 }
 ----
 
@@ -1091,38 +1141,39 @@ Compared to parameterless static queries, the generated Java methods differ base
 
 Methods for queries returning:
 
-* Collections: start with "search", and parameters can be set on the chained `.execute(/* ... */)` method.
-* Single references, or primitives: start with "get", and parameters can be set on the same method.
+* Collections: start with "query", and parameters can be set on it. After that you must trigger with the `.execute()` method.
+* Single references, or primitives: contains an `.execute()`, and parameters can be set on the same method.
 
 [source,java]
 ----
 @Autowired
-RootAllLeadsBetween.RootAllLeadsBetweenDao rootAllLeadsBetweenDao;
+RootAllLeadsBetweenDao rootAllLeadsBetweenDao;
 
 @Autowired
-RootCountAllLeadsBetween.RootCountAllLeadsBetweenDao rootCountAllLeadsBetweenDao;
+RootCountAllLeadsBetweenDao rootCountAllLeadsBetweenDao;
 
 @Autowired
-Lead.LeadDao leadDao;
+LeadDao leadDao;
 
 @Test
 public void testStaticQuery() {
     leadDao.create(Lead.builder().withValue(50).build());
     leadDao.create(Lead.builder().withValue(175).build());
 
-    List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.searchRootAllLeadsBetween()
-        .execute(_QueryModel_rootAllLeadsBetween_Parameters.builder()
-            .withMax(80)
-            .withMin(10)
-            .build()
-        );
+    List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.query(
+                    RootAllLeadsBetweenParameter.builder()
+                            .withMax(80)
+                            .withMin(10)
+                            .build())
+            .execute();
+
     assertEquals(1, rootAllLeadsBetween.size());
     assertEquals(Optional.of(50), rootAllLeadsBetween.get(0).getValue());
 
-    Integer rootCountAllLeadsBetween = rootCountAllLeadsBetweenDao.getRootCountAllLeadsBetween(_QueryModel_rootCountAllLeadsBetween_Parameters.builder()
-        .withMin(10)
-        .withMax(80)
-        .build()
+    Integer rootCountAllLeadsBetween = rootCountAllLeadsBetweenDao.execute(RootCountAllLeadsBetweenParameter.builder()
+            .withMin(10)
+            .withMax(80)
+            .build()
     );
 
     assertEquals(1, rootCountAllLeadsBetween);
@@ -1136,19 +1187,17 @@ filter and paging capabilities as traditional queries have.
 
 [source,java]
 ----
-@Autowired
-RootAllLeadsBetween.RootAllLeadsBetweenDao rootAllLeadsBetweenDao;
+    @Autowired
+    RootAllLeadsBetweenDao rootAllLeadsBetweenDao;
 
-@Test
-public void testStaticQuery() {
-    // ...
+    @Test
+    public void testStaticQuery() {
+        // ...
 
-    List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.searchRootAllLeadsBetween()
-        .limit(25) // additionl limit
-        .orderBy(Lead.Attribute.VALUE) // additional ordering
-        .execute(_QueryModel_rootAllLeadsBetween_Parameters.builder()
-            .withMax(80)
-            .build()
-        );
-}
+        List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.query(RootAllLeadsBetweenParameter.builder()
+                        .withMax(80)
+                        .build())
+                .orderBy(LeadAttribute.VALUE) // additional ordering
+                .execute(20); // additionl limit
+    }
 ----
