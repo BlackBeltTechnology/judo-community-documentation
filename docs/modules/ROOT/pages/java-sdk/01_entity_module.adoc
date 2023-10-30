@@ -231,13 +231,13 @@ As a last step, every query must be fired by calling the `.execute()` method.
 
 The `execute` method can be used in various ways :
 
- * Without parameter `.execute()`, you will gain all elements, that satisfy the query critics.
+ * Without parameter `.execute()`, you will gain all element that satisfy the query condition.
  * With one parameter `.execute(Integer limit)`, you can define how many elements you'd like to fetch.
  * With two parameter `.execute(Integer limit, Integer offset)`, you can define an offset to specify how many elements you'd like to skip.
 
 __The return type is always a List.__
 
-If you don't need the instances of the entity, only the count of the fitted entities, you can use the `count` methods.
+If you don't need the instances of the entity, only the count of the fitting entities, you can use the `count` methods.
 
 **Counting every Address entity in the database:**
 
@@ -308,6 +308,7 @@ Currently, we support two types of validation concepts:
 
 * `required` modifiers
 * type-based validations
+
 To understand how to use the `required` modifier, please check the xref:meta-jsl:05_entity.adoc#primitive-field[Primitive Fields,window=_blank]
 section of our documentation
 
@@ -440,13 +441,13 @@ In this example you may notice that the list of Orders is queried through the `p
 explained in great detail in the next sections.
 
 === AdaptTo
-You can get the ancestors representation of the Person entity if you need it. Use the `adaptTo(Class<T> target)` method.
+You can get the ancestors of the Person entity if you need it. Use the `adaptTo(Class<T> target)` method.
 
-This method cast the actual element to the target class.
+This method casts the actual element to the target class.
 
 For example :
 
-Each DAO has its own Identifier class, so if you want to use the CustomerDAO to retrieve a Person as a Customer, you'll need to adapt them.
+Each DAO has its own Identifier class, so if you want to use the CustomerDAO to retrieve a Person as a Customer, you'll need to adapt it.
 
 [source,java]
 ----
@@ -476,7 +477,7 @@ void testAdaptTo() {
 ----
 
 [IMPORTANT]
-Only use this method if there is an inherited relation between the entities.
+Only use this method if there is an inherited relation between the entities. This cast is a map between entities. It is up to you to decide how to use it correctly.
 
 == Abstract Entity
 
@@ -654,7 +655,7 @@ void testRelations() {
             .withAddress(Address.builder()
                     .withCity("Budapest")
                     .withStreet("Rose")
-                    .build(),
+                    .build()
             ).build(),
            PersonAttachedRelationsForCreate.builder()
                     .withOrders(List.of(/* list of Orders */))
@@ -669,7 +670,7 @@ void testRelations() {
 
 As we can see, the `orders` relation can only be queried via the `Person` entity's `PersonDao`.
 
-When creating an entity with relations, you attach it using the `PersonAttachedRelationsForCreate`. This builder contains all the relations that the Person entity has, including the inherited ones.
+When creating an entity with relations, you attach them using the `PersonAttachedRelationsForCreate`. This builder contains all the relations that the Person entity has, including the inherited ones.
 
 The reason why the lifecycle is split for fields and relations is based on historical experience managing these two
 concepts.
@@ -707,10 +708,23 @@ Going with this setup the `CustomerDao` will contain the following methods (besi
 [source,java]
 ----
 @Autowired
-CustomerDao customerDao;
+PersonDao personDao;
+
+@Autowired
+OrderItemDao orderItemDao;
+
+@Autowired
+ProductDao productDao;
 
 @Test
 void testOneWay() {
+
+    Product butter = productDao.create(Product.builder().withName("Butter").withPrice(2).build());
+    Product chainsaw = productDao.create(Product.builder().withName("Master Chainsaw").withPrice(1500).build());
+
+    OrderItem orderItem = orderItemDao.create(OrderItem.builder().withAmount(1).build(),
+            OrderItemAttachedRelationsForCreate.builder().withProduct(chainsaw).build());
+
     Person johnPerson = personDao.create(Person.builder()
         .withFirstName("John")
         // ...
@@ -719,6 +733,9 @@ void testOneWay() {
 
     // new PersonDAO APIs:
     Optional<OrderItem> favouriteItem = personDao.queryFavouriteItem(johnPerson); // Optional empty
+    personDao.setFavouriteItem(johnPerson, orderItem);
+    personDao.unsetFavouriteItem(johnPerson);
+
     personDao.createFavouriteItem(
             johnPerson,
             OrderItem.builder().withAmount(150).build(),
@@ -747,7 +764,7 @@ entity Person extends Customer, User {
 }
 
 entity Order {
-    relation required Customer customer: opposite orders;
+    relation required Customer customer opposite: orders;
     // ...
 }
 ----
@@ -760,10 +777,13 @@ Modeling the two entities this way, the resulting DAO APIs are extended to conta
 AddressDao addressDao;
 
 @Autowired
-CustomerDao customerDao;
+PersonDao personDao;
 
 @Autowired
 OrderDao orderDao;
+
+@Autowired
+PoductDao productDao;
 
 @Test
 void testTwoWay() {
@@ -796,7 +816,7 @@ void testTwoWay() {
 
     // new OrderDAO APIs:
     Optional<Customer> customerForOrder = Optional.ofNullable(orderDao.queryCustomer(order));
-    orderDao.setCustomer(order, /* existent customer */);
+    orderDao.setCustomer(order, customerForOrder.get());
 }
 ----
 
@@ -956,23 +976,22 @@ void testCalculatedMembers() {
 ----
 
 Calculated members are not limited to primitive types!
-// TODO  check the link is correct
+
 You may find a detailed description of the expression syntax for calculated members in the xref:meta-jsl:05_entity.adoc#calculated-members[Calculated members,window=_blank]
 section of the JSL DSL documentation.
 
 === Fetching
 
-You can influence the behavior of a field or a relation. You have the flexibility to fetch a field like a relation, or vice versa.
+You can influence the behavior of a relation. You have the flexibility to fetch a relation like a field.
 For more information, you can refer to the xref:meta-jsl:05_entity.adoc#fetching-strategy[Fetching strategy,window=_blank] section.
 
 **For example:**
 [source,jsl]
 ----
 entity OrderItem {
-    //TODO this is required
 	relation required Product product opposite-add: orderItems[] eager: true;
 	field required Integer amount;
-	field String productName <= self.product.name eager: false;
+	field String productName <= self.product.name;
 	field Integer price <= self.amount * self.product.price;
 }
 
@@ -998,8 +1017,6 @@ public void testFetch() {
     OrderItem orderItem = orderItemDao.create(OrderItem.builder().withAmount(20).withProduct(product).build());
 
     assertEquals("Butter", orderItem.getProduct().getName());
-    assertEquals("Butter",orderItemDao.queryProductName(orderItem).get());
-
 }
 ----
 
@@ -1116,7 +1133,7 @@ Depending on the return types, and the existence or absence of parameters, the g
 
 === Parameterless Static Query
 
-Parameterless static queries are generated on their corresponding dedicated DAOs and contains an `.execute()` method.
+Parameterless static queries are generated on their corresponding dedicated DAOs and contain an `.execute()` method.
 
 [source,java]
 ----
@@ -1141,8 +1158,8 @@ Compared to parameterless static queries, the generated Java methods differ base
 
 Methods for queries returning:
 
-* Collections: start with "query", and parameters can be set on it. After that you must trigger with the `.execute()` method.
-* Single references, or primitives: contains an `.execute()`, and parameters can be set on the same method.
+* Collections: start with "query", and parameters can be set on then. Since queries are builders, we need to call the .execute() method in order to get the actual results.
+* Single references, or primitives: contain an `.execute()`, and parameters can be set on the same method.
 
 [source,java]
 ----
