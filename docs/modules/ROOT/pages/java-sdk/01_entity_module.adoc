@@ -1133,7 +1133,7 @@ Depending on the return types, and the existence or absence of parameters, the g
 
 === Parameterless Static Query
 
-Parameterless static queries are generated on their corresponding dedicated DAOs and contain an `.execute()` method.
+Parameterless static queries are generated in their corresponding dedicated DAOs. If the return type is not a list, they contain an `.execute()` method otherwise, they contain a `.query()` method.
 
 [source,java]
 ----
