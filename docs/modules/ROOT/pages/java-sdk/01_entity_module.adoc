@@ -576,7 +576,7 @@ entity with a field, or fields which may contain multiple hundreds or thousands 
 In such cases it is advised to use "relations" instead.
 ====
 
-// TODO Deep copy explanation
+// TODO Deep copy explanation https://blackbelt.atlassian.net/browse/JNG-5269
 
 === Identifiers
 
