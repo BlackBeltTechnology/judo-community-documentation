@@ -815,7 +815,7 @@ void testTwoWay() {
     orderDao.createOrderItems(order, List.of(OrderItem.builder().withAmount(50).build()), List.of(OrderItemAttachedRelationsForCreate.builder().withProduct(butter).build()));
 
     // new OrderDAO APIs:
-    Optional<Customer> customerForOrder = Optional.ofNullable(orderDao.queryCustomer(order));
+    Optional<Customer> customerForOrder = orderDao.queryCustomer(order);
     orderDao.setCustomer(order, customerForOrder.get());
 }
 ----
@@ -871,7 +871,7 @@ entity Person {
 
 The following methods will be generated:
 
-* `Person queryBestFriend(Person object)` return type `Optional<Person>`
+* `Optional<Person> queryBestFriend(Person object)`
 * `void setBestFriend(Person object, Person relatedObject)`
 * `void unsetBestFriend(Person object)`
 
@@ -888,7 +888,7 @@ entity Person {
 
 The following methods will be generated:
 
-* `Animal queryPet(Person object)` return type `Person`
+* `Animal queryPet(Person object)`
 * `void setPet(Person object, Animal relatedObject)`
 
 In case of `required` relations, DAOs will not contain an `unset` method.
@@ -966,7 +966,7 @@ void testCalculatedMembers() {
             .execute();
 
     persons.get(0).setFirstName("Johny");
-    // the calculated member didn't changed
+    // the calculated member hasn't changed
     assertEquals(Optional.of("John Doe"), persons.get(0).getFullName());
 
     // refresh person calculated fields
@@ -1100,7 +1100,7 @@ void testQuery() {
     List<Lead> leadsOver10 = salesPersonDao.queryLeadsOver10(createdSalesPerson).execute();
 ----
 
-The query's return depends on the JSL types:
+Queries return type depend on the following query types in JSL:
 
   *  Primitive queries will return the primitive type representation.
   *  Single-entity queries will return an Optional within the Entity class.
