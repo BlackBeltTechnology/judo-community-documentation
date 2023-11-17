@@ -84,6 +84,8 @@ void testCRUD() {
     address = addressDao.update(/* ... */);
     addressDao.delete(address);
     addressDao.getById(/* ... */);
+    addressDao.findAllById(/* ... */);
+    addressDao.existsById(/* ... */);
     addressDao.query(/* ... */);
     addressDao.getAll();
     addressDao.countAll();
@@ -102,7 +104,7 @@ AddressDao addressDao;
 
 @Test
 void testCreate() {
-    Address address = addressDao.create(Address.builder()
+    Address address = addressDao.create(AddressForCreate.builder()
         .withCity("Budapest")
         .withCountry("Hungary")
         .withStreet("Rose")
@@ -113,9 +115,9 @@ void testCreate() {
 
 **We should observe:**
 
-* that we can utilize Builders (`Address.builder()`) to easily create raw instances of Entities
+* that we can utilize Builders (`AddressForCreate.builder()`) to easily create raw instances of Entities for create
 * we are using the `.create()` method of the DAO
-* the `create()` method returns an instance of our entity if the operation is successful.
+* the `create()` method returns an `Address` instance of our entity if the operation is successful.
 
 === Default values
 
@@ -150,7 +152,7 @@ OrderDao orderDao;
 
 @Test
 void testDefaults() {
-    Order myOrder = orderDao.create(Order.builder().build());
+    Order myOrder = orderDao.create(OrderForCreate.builder().build());
 
     assertEquals(OrderStatus.OPEN, myOrder.getStatus());
     assertEquals(Optional.of(1500), myOrder.getPrice());
@@ -180,6 +182,8 @@ void testFetch() {
 
 The `.getById()` method in most cases should be used when we would like to fetch an updated version of an entity for which
 we already have a reference to. The return type is Optional because the entity may not exist in the database.
+
+// TODO getByIds
 
 **Fetching every Address entity in the database:**
 
@@ -211,7 +215,7 @@ void testQuery() {
         .filterByCity(StringFilter.equalTo("Budapest"))
         .orderBy(AddressAttribute.CITY) // or
         //.orderByDescending(AddressAttribute.CITY)
-        .execute(20);
+        .selectList(20);
 }
 ----
 
@@ -227,13 +231,13 @@ the field which we would like to use.
 Multiple fields may be used for sorting and filtering as well.
 ====
 
-As a last step, every query must be fired by calling the `.execute()` method.
+As a last step, every query must be fired by calling the `.selectList()` method.
 
-The `execute` method can be used in various ways :
+The `selectList` method can be used in various ways :
 
- * Without parameter `.execute()`, you will gain all element that satisfy the query condition.
- * With one parameter `.execute(Integer limit)`, you can define how many elements you'd like to fetch.
- * With two parameter `.execute(Integer limit, Integer offset)`, you can define an offset to specify how many elements you'd like to skip.
+ * Without parameter `.selectList()`, you will gain all element that satisfy the query condition.
+ * With one parameter `.selectList(Integer limit)`, you can define how many elements you'd like to fetch.
+ * With two parameter `.selectList(Integer limit, Integer offset)`, you can define an offset to specify how many elements you'd like to skip.
 
 __The return type is always a List.__
 
@@ -281,7 +285,7 @@ AddressDao addressDao;
 
 @Test
 void testUpdate() {
-    Address address = addressDao.create(Address.builder()
+    Address address = addressDao.create(AddressForCreate.builder()
         // ...
         .build()
     );
@@ -343,13 +347,13 @@ AddressDao addressDao;
 @Test
 void testValidation() {
     // Will throw ValidationException because street and city is missing
-    Address address1 = addressDao.create(Address.builder()
+    Address address1 = addressDao.create(AddressForCreate.builder()
         .withPostalCode(1490)
         .build()
     );
 
     // Will throw ValidationException because the postalCode attribute fails the precision rule defined on PostalCode
-    Address address2 = addressDao.create(Address.builder()
+    Address address2 = addressDao.create(AddressForCreate.builder()
         .withCity("Budapest")
         .withStreet("Custom Street 2.")
         .withPostalCode(467890)
@@ -419,18 +423,18 @@ PersonDao personDao;
 
 @Test
 void testInheritance() {
-    Person johnPerson = personDao.create(Person.builder()
+    Person johnPerson = personDao.create(PersonForCreate.builder()
             .withFirstName("John")
             .withLastName("Doe")
             .withEmail("john@doe.com")
-            .withAddress(Address.builder()
+            .withAddress(AddressForCreate.builder()
                     .withStreet("Rose")
                     .withCity("Budapest")
                     .build()
             ).build()
     );
 
-    List<Order> ordersForJohn = personDao.queryOrders(johnPerson).execute();
+    List<Order> ordersForJohn = personDao.queryOrders(johnPerson).selectList();
 
     String city = johnPerson.getAddress().getCity();
 }
@@ -539,19 +543,18 @@ ProductDao productDao;
 void testFields() {
     Optional<Customer> johnCustomer = customerDao.getById(johnPerson.adaptTo(Customer.class).identifier());
 
-    Product chainsaw = productDao.create(Product.builder().withName("Master Chainsaw").withPrice(1500).build());
-    Product butter = productDao.create(Product.builder().withName("Master Butter").withPrice(2).build());
+    Product chainsaw = productDao.create(ProductForCreate.builder().withName("Master Chainsaw").withPrice(1500).build());
+    Product butter = productDao.create(ProductForCreate.builder().withName("Master Butter").withPrice(2).build());
 
-    Order order = orderDao.create(Order.builder()
+    Order order = orderDao.create(OrderForCreate.builder()
             .withStatus(OrderStatus.OPEN)
-            .build(),
-            OrderAttachedRelationsForCreate.builder().withCustomer(johnCustomer.get()).build()
+            .withCustomer(johnCustomer.get())
+            .build()
     );
 
     orderDao.createOrderItems(
             order,
-            List.of(OrderItem.builder().withAmount(50).build()),
-            List.of(OrderItemAttachedRelationsForCreate.builder().withProduct(butter).build())
+            List.of(OrderItemForCreate.builder().withAmount(50).withProduct(butter).build())
     );
 
     // refresh the order instance after the creation
