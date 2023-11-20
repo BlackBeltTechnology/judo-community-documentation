@@ -119,6 +119,11 @@ void testCreate() {
 * we are using the `.create()` method of the DAO
 * the `create()` method returns an `Address` instance of our entity if the operation is successful.
 
+All DAOs expect a <EntityName>ForCreate instance for creation and return a created <EntityName> instance. The concept behind this is that you can separate the created and not created instances.
+
+// TODO  and the <EntityName>ForCreate instance contains the relations of an entity.
+// TODO link for the relation part
+
 === Default values
 
 Entity fields and identifiers may have default values defined for them which can reduce the need of manual coding when
@@ -176,14 +181,18 @@ AddressDao addressDao;
 
 @Test
 void testFetch() {
-    Optional<Address> addressAgain = addressDao.getById(address.identifier());
+        Optional<Address> addressAgain = addressDao.getById(address1.identifier());
+        List<Address> findedAddresesById = addressDao.findAllById(List.of((UUID) address1.identifier().getIdentifier(), (UUID) address2.identifier().getIdentifier()));
+        boolean address1IsExist = addressDao.existsById((UUID) address1.identifier().getIdentifier());
 }
 ----
 
 The `.getById()` method in most cases should be used when we would like to fetch an updated version of an entity for which
 we already have a reference to. The return type is Optional because the entity may not exist in the database.
 
-// TODO getByIds
+The `.findAllById()` method is useful when you want to retrieve instances for a list of IDs. It's important to note that only the existing list elements are returned.
+
+Use `.existsById()` if you need to check whether an element exists. This is faster than retrieving an instance.
 
 **Fetching every Address entity in the database:**
 
@@ -216,6 +225,12 @@ void testQuery() {
         .orderBy(AddressAttribute.CITY) // or
         //.orderByDescending(AddressAttribute.CITY)
         .selectList(20);
+
+    Optional<Address> oneBudapsetAddress = addressDao.query()
+        .filterByCity(StringFilter.equalTo("Budapest"))
+        .orderBy(AddressAttribute.CITY) // or
+        //.orderByDescending(AddressAttribute.CITY)
+        .selectOne();
 }
 ----
 
@@ -231,7 +246,7 @@ the field which we would like to use.
 Multiple fields may be used for sorting and filtering as well.
 ====
 
-As a last step, every query must be fired by calling the `.selectList()` method.
+As a last step, every query must be fired by calling the `.selectList()` or `.selectOne()`  method.
 
 The `selectList` method can be used in various ways :
 
@@ -240,6 +255,13 @@ The `selectList` method can be used in various ways :
  * With two parameter `.selectList(Integer limit, Integer offset)`, you can define an offset to specify how many elements you'd like to skip.
 
 __The return type is always a List.__
+
+The `selectOne` method has two types :
+
+ * Without a parameter `.selectOne()` you will retrieve the first element that satisfies the query condition.
+ * With one parameter `.selectOne(Integer offset)` you will retrieve the first element after the skipped elements.
+
+__The return type is always an Optional.__
 
 If you don't need the instances of the entity, only the count of the fitting entities, you can use the `count` methods.
 
@@ -464,6 +486,9 @@ PersonDao personDao;
 @Autowired
 UserDao userDao;
 
+@Autowired
+CustomerDao customerDao;
+
 @Test
 void testAdaptTo() {
 
@@ -539,32 +564,30 @@ CustomerDao customerDao;
 @Autowired
 ProductDao productDao;
 
+ @Autowired
+OrderDao orderDao;
+
 @Test
 void testFields() {
     Optional<Customer> johnCustomer = customerDao.getById(johnPerson.adaptTo(Customer.class).identifier());
 
-    Product chainsaw = productDao.create(ProductForCreate.builder().withName("Master Chainsaw").withPrice(1500).build());
     Product butter = productDao.create(ProductForCreate.builder().withName("Master Butter").withPrice(2).build());
 
     Order order = orderDao.create(OrderForCreate.builder()
             .withStatus(OrderStatus.OPEN)
             .withCustomer(johnCustomer.get())
+            .withOrderItems(List.of(OrderItemForCreate.builder()
+                    .withAmount(50).withProduct(butter)
+                    .build())
+            )
             .build()
     );
-
-    orderDao.createOrderItems(
-            order,
-            List.of(OrderItemForCreate.builder().withAmount(50).withProduct(butter).build())
-    );
-
-    // refresh the order instance after the creation
-    order = orderDao.getById(order.identifier()).get();
 
     order.getOrderItems().get(0).setAmount(300);
 
     Order updatedOrder = orderDao.update(order);
 
-    assertEquals(300, updatedOrder.getOrderItems().get(0).getAmount());
+    assertEquals(300, (int) updatedOrder.getOrderItems().get(0).getAmount());
 }
 ----
 
@@ -605,9 +628,9 @@ UserDao userDao;
 @Test
 void testIdentifier() {
 
-    User user1 = userDao.create(User.builder().withEmail("same@mail.com").build());
+    User user1 = userDao.create(UserForCreate.builder().withEmail("same@mail.com").build());
     // Will throw ValidationException because the email is not unique
-    User user2 = userDao.create(User.builder().withEmail("same@mail.com").build());
+    User user2 = userDao.create(UserForCreate.builder().withEmail("same@mail.com").build());
 
 }
 ----
@@ -651,30 +674,30 @@ PersonDao personDao;
 
 @Test
 void testRelations() {
-    Person johnPerson = personDao.create(Person.builder()
-            .withFirstName("John")
-            .withLastName("Doe")
-            .withEmail("john@doe.com")
-            .withAddress(Address.builder()
-                    .withCity("Budapest")
-                    .withStreet("Rose")
-                    .build()
-            ).build(),
-           PersonAttachedRelationsForCreate.builder()
+    Person johnPerson = personDao.create(PersonForCreate.builder()
+                    .withFirstName("John")
+                    .withLastName("Doe")
+                    .withEmail("john@doe.com")
+                    .withAddress(AddressForCreate.builder()
+                            .withCity("Budapest")
+                            .withStreet("Rose")
+                            .build()
+                    )
                     .withOrders(List.of(/* list of Orders */))
                     .build()
     );
 
     personDao.addOrders(johnPerson, List.of(/* ... */));
     personDao.removeOrders(johnPerson, List.of(/* ... */));
-    List<Order> ordersQueried = personDao.queryOrders(johnPerson).execute();
+    List<Order> ordersQueried = personDao.queryOrders(johnPerson).selectList();
 }
 ----
 
 As we can see, the `orders` relation can only be queried via the `Person` entity's `PersonDao`.
 
-When creating an entity with relations, you attach them using the `PersonAttachedRelationsForCreate`. This builder contains all the relations that the Person entity has, including the inherited ones.
+// TODO Person vs PersonForCreate builder
 
+When creating, you must use a `PersonForCreate` instance. You can use `PersonForCreate.builder()`. This builder includes all the relations that the Person entity has, including the inherited ones. You can only set the association relation with an existing instance here. Composition fields, like the Address, require an AddressForCreate instance.
 The reason why the lifecycle is split for fields and relations is based on historical experience managing these two
 concepts.
 
@@ -722,16 +745,15 @@ ProductDao productDao;
 @Test
 void testOneWay() {
 
-    Product butter = productDao.create(Product.builder().withName("Butter").withPrice(2).build());
-    Product chainsaw = productDao.create(Product.builder().withName("Master Chainsaw").withPrice(1500).build());
+    Product butter = productDao.create(ProductForCreate.builder().withName("Butter").withPrice(2).build());
+    Product chainsaw = productDao.create(ProductForCreate.builder().withName("Master Chainsaw").withPrice(1500).build());
 
-    OrderItem orderItem = orderItemDao.create(OrderItem.builder().withAmount(1).build(),
-            OrderItemAttachedRelationsForCreate.builder().withProduct(chainsaw).build());
+    OrderItem orderItem = orderItemDao.create(OrderItemForCreate.builder().withAmount(1).withProduct(chainsaw).build());
 
-    Person johnPerson = personDao.create(Person.builder()
-        .withFirstName("John")
-        // ...
-        .build()
+    Person johnPerson = personDao.create(PersonForCreate.builder()
+            .withFirstName("John")
+            // ...
+            .build()
     );
 
     // new PersonDAO APIs:
@@ -741,8 +763,7 @@ void testOneWay() {
 
     personDao.createFavouriteItem(
             johnPerson,
-            OrderItem.builder().withAmount(150).build(),
-            OrderItemAttachedRelationsForCreate.builder().withProduct(butter).build()
+            OrderItemForCreate.builder().withAmount(150).withProduct(butter).build()
     );
 }
 ----
@@ -790,12 +811,12 @@ PoductDao productDao;
 
 @Test
 void testTwoWay() {
-    Product butter = productDao.create(Product.builder().withName("Butter").withPrice(2).build());
-    Person johnPerson = personDao.create(Person.builder()
+    Product butter = productDao.create(ProductForCreate.builder().withName("Butter").withPrice(2).build());
+    Person johnPerson = personDao.create(PersonForCreate.builder()
             .withFirstName("John")
             .withLastName("Doe")
             .withEmail("john@doe.com")
-            .withAddress(Address.builder()
+            .withAddress(AddressForCreate.builder()
                     .withCity("Budapest")
                     .withStreet("Rose")
                     .build()
@@ -806,20 +827,20 @@ void testTwoWay() {
     personDao.createOrders(johnPerson, List.of(/* ... */));
     personDao.addOrders(johnPerson, List.of(/* ... */));
     personDao.removeOrders(johnPerson, List.of(/* ... */));
-    personDao.queryOrders(johnPerson).execute();
-    List<Order> queriedOrders = personDao.queryOrders(johnPerson).execute();
+    personDao.queryOrders(johnPerson).selectList();
+    List<Order> queriedOrders = personDao.queryOrders(johnPerson).selectList();
 
-    Order order = orderDao.create(Order.builder()
+    Order order = orderDao.create(OrderForCreate.builder()
             .withStatus(OrderStatus.OPEN)
-            .build(),
-            OrderAttachedRelationsForCreate.builder().withCustomer(johnPerson.adaptTo(Customer.class)).build()
+            .withCustomer(johnPerson.adaptTo(Customer.class))
+            .build()
     );
 
-    orderDao.createOrderItems(order, List.of(OrderItem.builder().withAmount(50).build()), List.of(OrderItemAttachedRelationsForCreate.builder().withProduct(butter).build()));
+    orderDao.createOrderItems(order, List.of(OrderItemForCreate.builder().withAmount(50).withProduct(butter).build()));
 
     // new OrderDAO APIs:
-    Optional<Customer> customerForOrder = orderDao.queryCustomer(order);
-    orderDao.setCustomer(order, customerForOrder.get());
+    Customer customerForOrder = orderDao.queryCustomer(order);
+    orderDao.setCustomer(order, customerForOrder);
 }
 ----
 
@@ -953,11 +974,11 @@ PersonDao personDao;
 
 @Test
 void testCalculatedMembers() {
-    personDao.create(Person.builder()
+    personDao.create(PersonForCreate.builder()
             .withFirstName("John")
             .withLastName("Doe")
             .withEmail("john@doe.com")
-            .withAddress(Address.builder()
+            .withAddress(AddressForCreate.builder()
                     .withCity("Budapest")
                     .withStreet("Rose")
                     .build()
@@ -966,7 +987,7 @@ void testCalculatedMembers() {
 
     List<Person> persons = personDao.query()
             .filterByEmail(StringFilter.equalTo("john@doe.com"))
-            .execute();
+            .selectList();
 
     persons.get(0).setFirstName("Johny");
     // the calculated member hasn't changed
@@ -1015,9 +1036,9 @@ OrderItemDao orderItemDao;
 @Test
 public void testFetch() {
 
-    Product product = productDao.create(Product.builder().withName("Butter").withPrice(3).build());
+    Product product = productDao.create(ProductForCreate.builder().withName("Butter").withPrice(3).build());
 
-    OrderItem orderItem = orderItemDao.create(OrderItem.builder().withAmount(20).withProduct(product).build());
+    OrderItem orderItem = orderItemDao.create(OrderItemForCreate.builder().withAmount(20).withProduct(ProductForCreate.builderFrom(product).build()).build());
 
     assertEquals("Butter", orderItem.getProduct().getName());
 }
@@ -1056,7 +1077,7 @@ of the entity on which we defined the query.
 [source,jsl]
 ----
 entity Lead {
-    field Integer value = 100000;
+    field Integer value default: 100000;
     relation required SalesPerson salesPerson opposite: leads;
     // ...
 }
@@ -1085,22 +1106,23 @@ SalesPersonDao salesPersonDao;
 
 @Test
 void testQuery() {
-    SalesPerson createdSalesPerson = salesPersonDao.create(SalesPerson.builder()
-                    .withFirstName("Super")
-                    .withLastName("Person")
-                    .withEmail("super.person@mail.com")
-                    .withAddress(Address.builder().withStreet("Rose").withCity("Budapest").build())
-                    .build()
-            );
+    SalesPerson createdSalesPerson = salesPersonDao.create(SalesPersonForCreate.builder()
+            .withFirstName("Super")
+            .withLastName("Person")
+            .withEmail("super.person@mail.com")
+            .withAddress(AddressForCreate.builder().withStreet("Rose").withCity("Budapest").build())
+            .build()
+    );
 
     List<Lead> leadsOver = salesPersonDao
             .queryLeadsOver(createdSalesPerson, SalesPersonLeadsOverParameter.builder()
                     .withLimit(200) // explicit definition of "limit" to have value of 200 instead of the default 100
                     .build()
             )
-            .execute();
+            .selectList();
 
-    List<Lead> leadsOver10 = salesPersonDao.queryLeadsOver10(createdSalesPerson).execute();
+    List<Lead> leadsOver10 = salesPersonDao.queryLeadsOver10(createdSalesPerson).selectList();
+}
 ----
 
 Queries return type depend on the following query types in JSL:
@@ -1148,10 +1170,10 @@ LeadDao leadDao;
 
 @Test
 public void testStaticQuery() {
-    leadDao.create(Lead.builder().withValue(50).build());
-    leadDao.create(Lead.builder().withValue(175).build());
+    leadDao.create(LeadForCreate.builder().withValue(50).build());
+    leadDao.create(LeadForCreate.builder().withValue(175).build());
 
-    assertEquals(2, totalNumberOfLeadsDao.execute());
+    assertTrue(2 == totalNumberOfLeadsDao.selectValue());
 }
 ----
 
@@ -1177,26 +1199,26 @@ LeadDao leadDao;
 
 @Test
 public void testStaticQuery() {
-    leadDao.create(Lead.builder().withValue(50).build());
-    leadDao.create(Lead.builder().withValue(175).build());
+    leadDao.create(LeadForCreate.builder().withValue(50).build());
+    leadDao.create(LeadForCreate.builder().withValue(175).build());
 
     List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.query(
                     RootAllLeadsBetweenParameter.builder()
                             .withMax(80)
                             .withMin(10)
                             .build())
-            .execute();
+            .selectList();
 
     assertEquals(1, rootAllLeadsBetween.size());
     assertEquals(Optional.of(50), rootAllLeadsBetween.get(0).getValue());
 
-    Integer rootCountAllLeadsBetween = rootCountAllLeadsBetweenDao.execute(RootCountAllLeadsBetweenParameter.builder()
+    Integer rootCountAllLeadsBetween = rootCountAllLeadsBetweenDao.selectValue(RootCountAllLeadsBetweenParameter.builder()
             .withMin(10)
             .withMax(80)
             .build()
     );
 
-    assertEquals(1, rootCountAllLeadsBetween);
+    assertTrue(1 == rootCountAllLeadsBetween);
 }
 ----
 
@@ -1207,17 +1229,17 @@ filter and paging capabilities as traditional queries have.
 
 [source,java]
 ----
-    @Autowired
-    RootAllLeadsBetweenDao rootAllLeadsBetweenDao;
+@Autowired
+RootAllLeadsBetweenDao rootAllLeadsBetweenDao;
 
-    @Test
-    public void testStaticQuery() {
-        // ...
+@Test
+public void testStaticQuery() {
+    // ...
 
-        List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.query(RootAllLeadsBetweenParameter.builder()
-                        .withMax(80)
-                        .build())
-                .orderBy(LeadAttribute.VALUE) // additional ordering
-                .execute(20); // additionl limit
-    }
+    List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.query(RootAllLeadsBetweenParameter.builder()
+                    .withMax(80)
+                    .build())
+            .orderBy(LeadAttribute.VALUE) // additional ordering
+            .selectList(20); // additionl limit
+}
 ----
