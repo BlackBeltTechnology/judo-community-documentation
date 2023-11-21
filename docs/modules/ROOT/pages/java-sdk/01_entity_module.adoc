@@ -119,10 +119,27 @@ void testCreate() {
 * we are using the `.create()` method of the DAO
 * the `create()` method returns an `Address` instance of our entity if the operation is successful.
 
-All DAOs expect a <EntityName>ForCreate instance for creation and return a created <EntityName> instance. The concept behind this is that you can separate the created and not created instances.
+All DAOs expect a <EntityName>ForCreate instance for creation and return a created <EntityName> instance. The concept behind this is that you can separate the created and not created instances. More details in the xref:java-sdk/01_entity_module.adoc#relations[relations] section
 
-// TODO  and the <EntityName>ForCreate instance contains the relations of an entity.
-// TODO link for the relation part
+==== The builder is reusable
+
+You can use a single builder more than once if needed
+
+[source,java]
+----
+@Autowired
+AddressDao addressDao;
+
+@Test
+void testReuseBuilder() {
+    AddressForCreateBuilder budapestAddressBuilder = AddressForCreate.builder()
+            .withCity("Budapest")
+            .withCountry("Hungary");
+
+    Address address1 = addressDao.create(budapestAddressBuilder.withStreet("Rose").build());
+    Address address2 = addressDao.create(budapestAddressBuilder.withStreet("Saint Stephen").build());
+}
+----
 
 === Default values
 
@@ -506,7 +523,7 @@ void testAdaptTo() {
 ----
 
 [IMPORTANT]
-Only use this method if there is an inherited relation between the entities. This cast is a map between entities. It is up to you to decide how to use it correctly.
+Only use this method if there is a relation between the entities. This cast is a map between entities. It is up to you to decide how to use it correctly.
 
 == Abstract Entity
 
@@ -573,21 +590,22 @@ void testFields() {
 
     Product butter = productDao.create(ProductForCreate.builder().withName("Master Butter").withPrice(2).build());
 
-    Order order = orderDao.create(OrderForCreate.builder()
+    //Create reusable builder for OrderItem
+    OrderItemForCreateBuilder orderItemForCreateBuilder = OrderItemForCreate.builder().withAmount(50).withProduct(butter);
+
+    //Create reusable builder for Order
+    OrderForCreateBuilder orderForCreateBuilder = OrderForCreate.builder()
             .withStatus(OrderStatus.OPEN)
-            .withCustomer(johnCustomer.get())
-            .withOrderItems(List.of(OrderItemForCreate.builder()
-                    .withAmount(50).withProduct(butter)
-                    .build())
-            )
-            .build()
-    );
+            .withCustomer(johnCustomer.get());
+
+    // addTo an OrderItemForCreate to the OrderForCreate
+    Order order = orderDao.create(orderForCreateBuilder.addToOrderItems(orderItemForCreateBuilder.build()).build());
 
     order.getOrderItems().get(0).setAmount(300);
 
     Order updatedOrder = orderDao.update(order);
 
-    assertEquals(300, (int) updatedOrder.getOrderItems().get(0).getAmount());
+    assertTrue(300 == updatedOrder.getOrderItems().get(0).getAmount());
 }
 ----
 
@@ -695,9 +713,12 @@ void testRelations() {
 
 As we can see, the `orders` relation can only be queried via the `Person` entity's `PersonDao`.
 
-// TODO Person vs PersonForCreate builder
+==== Person vs PersonForCreate
 
-When creating, you must use a `PersonForCreate` instance. You can use `PersonForCreate.builder()`. This builder includes all the relations that the Person entity has, including the inherited ones. You can only set the association relation with an existing instance here. Composition fields, like the Address, require an AddressForCreate instance.
+When creating, you must use a `PersonForCreate` instance. You can use `PersonForCreate.builder()`. This builder includes all the relations that the Person entity has, including the inherited ones. You can only set the association relation with an existing instance here. Composition fields, such an Address, require an `AddressForCreate` instance.
+
+After the creating you get a `Person` instance that only contains the fields and composition relations.
+
 The reason why the lifecycle is split for fields and relations is based on historical experience managing these two
 concepts.
 
@@ -760,7 +781,6 @@ void testOneWay() {
     Optional<OrderItem> favouriteItem = personDao.queryFavouriteItem(johnPerson); // Optional empty
     personDao.setFavouriteItem(johnPerson, orderItem);
     personDao.unsetFavouriteItem(johnPerson);
-
     personDao.createFavouriteItem(
             johnPerson,
             OrderItemForCreate.builder().withAmount(150).withProduct(butter).build()
@@ -870,13 +890,13 @@ ProductDao productDao;
 
 @Test
 void testOppositeAdd() {
-    Product chainsaw = productDao.create(Product.builder().withName("Master Chainsaw").withPrice(1500).build());
+    Product chainsaw = productDao.create(ProductForCreate.builder().withName("Master Chainsaw").withPrice(1500).build());
 
     // new ProductDAO APIs:
     productDao.createOrderItems(chainsaw, List.of(/* ... */));
     productDao.addOrderItems(chainsaw, List.of(/* ... */));
     productDao.removeOrderItems(chainsaw, List.of(/* ... */));
-    List<OrderItem> queriedOrderItems = productDao.queryOrderItems(chainsaw).execute();
+    List<OrderItem> queriedOrderItems = productDao.queryOrderItems(chainsaw).selectList();
 }
 ----
 
@@ -930,10 +950,8 @@ entity Person {
 
 The following methods will be generated:
 
-* `List<Order> createOrders(Person object, List.of(/* Orders */))`
-* `Order createOrders(Person object, Order relatedObject)`
-* `List<Order> createOrders(Person object, List.of(/* Orders */), List.of(/* OrderAttachedRelations */))`)`
-* `Order createOrders(Person object, Order relatedObject, OrderAttachedRelationsForCreate attachedObject)`
+* `List<Order> createOrders(Person object, List.of(/* OrderForCreate */))`
+* `Order createOrders(Person object, OrderForCreate relatedObject)`
 * `void addOrders(Person object, List.of(/* ... */))`
 * `void addOrders(Person object, Order relatedObject)`
 * `void removeOrders(Person object, List.of(/* ... */))`
@@ -1158,7 +1176,7 @@ Depending on the return types, and the existence or absence of parameters, the g
 
 === Parameterless Static Query
 
-Parameterless static queries are generated in their corresponding dedicated DAOs. If the return type is not a list, they contain an `.execute()` method otherwise, they contain a `.query()` method.
+Parameterless static queries are generated in their corresponding dedicated DAOs. If the return type is not a list, they contain an `.selectOne()` or `selectValue()` method otherwise, they contain a `.query()` method.
 
 [source,java]
 ----
@@ -1183,8 +1201,8 @@ Compared to parameterless static queries, the generated Java methods differ base
 
 Methods for queries returning:
 
-* Collections: start with "query", and parameters can be set on then. Since queries are builders, we need to call the .execute() method in order to get the actual results.
-* Single references, or primitives: contain an `.execute()`, and parameters can be set on the same method.
+* Collections start with "query", and parameters can be set on them. Since queries are builders, we need to call the `.selectList()` or `.selectOne()` method to retrieve the actual results.
+* Single references, or primitives: contain an `.selectOne()` or `.selectValue()`, and parameters can be set on the same method.
 
 [source,java]
 ----
