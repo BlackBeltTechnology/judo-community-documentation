@@ -12,7 +12,6 @@ paths tools like ours usually take from an architecture point of view:
 JUDO could be considered as an ORM.
 
 == Context
-
 In this documentation we will take the same example model as what we have in the xref:meta-jsl:01_intro.adoc[Introduction,window=_blank]
 section of the JSL documentation.
 
@@ -77,7 +76,7 @@ After code generation, we will get the following DAO APIs:
 [source,java]
 ----
 @Autowired
-Address.AddressDao addressDao;
+AddressDao addressDao;
 
 @Test
 void testCRUD() {
@@ -85,8 +84,11 @@ void testCRUD() {
     address = addressDao.update(/* ... */);
     addressDao.delete(address);
     addressDao.getById(/* ... */);
+    addressDao.findAllById(/* ... */);
+    addressDao.existsById(/* ... */);
     addressDao.query(/* ... */);
     addressDao.getAll();
+    addressDao.countAll();
 }
 
 ----
@@ -98,13 +100,14 @@ By writing the following Java code:
 [source,java]
 ----
 @Autowired
-Address.AddressDao addressDao;
+AddressDao addressDao;
 
 @Test
 void testCreate() {
-    Address address = addressDao.create(Address.builder()
+    Address address = addressDao.create(AddressForCreate.builder()
         .withCity("Budapest")
         .withCountry("Hungary")
+        .withStreet("Rose")
         .build()
     );
 }
@@ -112,9 +115,31 @@ void testCreate() {
 
 **We should observe:**
 
-* that we can utilize Builders (`Address.builder()`) to easily create raw instances of Entities
+* that we can utilize Builders (`AddressForCreate.builder()`) to easily create raw instances of Entities for create
 * we are using the `.create()` method of the DAO
-* the `create()` method returns an instance of our entity if the operation is successful.
+* the `create()` method returns an `Address` instance of our entity if the operation is successful.
+
+All DAOs expect a <EntityName>ForCreate instance for creation and return a created <EntityName> instance. The concept behind this is that you can separate the persistent and non-persistent instances. The `CreateFor` instances do not contain any identifiers. More details in the xref:java-sdk/01_entity_module.adoc#relations[relations] section
+
+==== The builder is reusable
+
+You can use a single builder more than once if needed
+
+[source,java]
+----
+@Autowired
+AddressDao addressDao;
+
+@Test
+void testReuseBuilder() {
+    AddressForCreateBuilder budapestAddressBuilder = AddressForCreate.builder()
+            .withCity("Budapest")
+            .withCountry("Hungary");
+
+    Address address1 = addressDao.create(budapestAddressBuilder.withStreet("Rose").build());
+    Address address2 = addressDao.create(budapestAddressBuilder.withStreet("Saint Stephen").build());
+}
+----
 
 === Default values
 
@@ -135,9 +160,8 @@ enum OrderStatus {
 }
 
 entity Order {
-    field required OrderStatus status = OrderStatus#OPEN;
-    field Integer price = 1500;
-    // ...
+    field required OrderStatus status default: OrderStatus#OPEN;
+    field Integer price default: 1500;
 }
 ----
 
@@ -146,14 +170,14 @@ Using the example above, the following should be expected:
 [source,java]
 ----
 @Autowired
-Order.OrderDao orderDao;
+OrderDao orderDao;
 
 @Test
 void testDefaults() {
-    Order myOrder = orderDao.create(Order.builder().build());
+    Order myOrder = orderDao.create(OrderForCreate.builder().build());
 
     assertEquals(OrderStatus.OPEN, myOrder.getStatus());
-    assertEquals(Optional.of(1500L), myOrder.getPrice());
+    assertEquals(Optional.of(1500), myOrder.getPrice());
 }
 ----
 
@@ -170,23 +194,29 @@ Through direct DAO operations, entities can be fetched in multiple ways.
 [source,java]
 ----
 @Autowired
-Address.AddressDao addressDao;
+AddressDao addressDao;
 
 @Test
 void testFetch() {
-    Optional<Address> addressAgain = addressDao.getById(address.get__identifier());
+        Optional<Address> addressAgain = addressDao.getById(address1.identifier());
+        List<Address> findedAddresesById = addressDao.findAllById(List.of((UUID) address1.identifier().getIdentifier(), (UUID) address2.identifier().getIdentifier()));
+        boolean address1IsExist = addressDao.existsById((UUID) address1.identifier().getIdentifier());
 }
 ----
 
 The `.getById()` method in most cases should be used when we would like to fetch an updated version of an entity for which
-we already have a reference to.
+we already have a reference to. The return type is Optional because the entity may not exist in the database.
 
-**Fetching every entity in the database:**
+The `.findAllById()` method is useful when you want to retrieve instances for a list of IDs. It's important to note that only the existing list elements are returned.
+
+Use `.existsById()` if you need to check whether an element exists. This is faster than retrieving an instance.
+
+**Fetching every Address entity in the database:**
 
 [source,java]
 ----
 @Autowired
-Address.AddressDao addressDao;
+AddressDao addressDao;
 
 @Test
 void testAll() {
@@ -203,24 +233,27 @@ on performance.
 [source,java]
 ----
 @Autowired
-Address.AddressDao addressDao;
+AddressDao addressDao;
 
 @Test
 void testQuery() {
     List<Address> addressesInBudapest = addressDao.query()
         .filterByCity(StringFilter.equalTo("Budapest"))
-        .limit(20)
-        .orderBy(Address.Attribute.CITY) // or
-        //.orderByDescending(Address.Attribute.CITY)
-        .execute();
+        .orderBy(AddressAttribute.CITY) // or
+        //.orderByDescending(AddressAttribute.CITY)
+        .selectList(20);
+
+    Optional<Address> oneBudapsetAddress = addressDao.query()
+        .filterByCity(StringFilter.equalTo("Budapest"))
+        .orderBy(AddressAttribute.CITY) // or
+        //.orderByDescending(AddressAttribute.CITY)
+        .selectOne();
 }
 ----
 
-Every DAO has a `.query()` method which is a builder.
+Every DAO has a `.query()` method which is a QueryCustomizer. It is a builder, and you can customize which entities you want to query.
 
-This builder will have `.filter()` methods on it based on the corresponding fields of each Entity.
-
-Additionally, to filters, we support a `.limit()` method as well, where you may define how many elements you'd like to fetch.
+This builder will have `.filter()` methods on it based on the corresponding fields of each Entity. You can filter primitive fields and primitive calculated members as well.
 
 Sorting can be achieved by adding the `.orderBy()` or `.orderByDescending()` method calls to the builder, and providing
 the field which we would like to use.
@@ -230,9 +263,54 @@ the field which we would like to use.
 Multiple fields may be used for sorting and filtering as well.
 ====
 
-As a last step, every query must be fired by calling the `.execute()` method.
+As a last step, every query must be fired by calling the `.selectList()` or `.selectOne()`  method.
+
+The `selectList` method can be used in various ways :
+
+ * Without parameter `.selectList()`, you will gain all element that satisfy the query condition.
+ * With one parameter `.selectList(Integer limit)`, you can define how many elements you'd like to fetch.
+ * With two parameter `.selectList(Integer limit, Integer offset)`, you can define an offset to specify how many elements you'd like to skip.
 
 __The return type is always a List.__
+
+The `selectOne` method has two types :
+
+ * Without a parameter `.selectOne()` you will retrieve the first element that satisfies the query condition.
+ * With one parameter `.selectOne(Integer offset)` you will retrieve the first element after the skipped elements.
+
+__The return type is always an Optional.__
+
+If you don't need the instances of the entity, only the count of the fitting entities, you can use the `count` methods.
+
+**Counting every Address entity in the database:**
+
+[source,java]
+----
+@Autowired
+AddressDao addressDao;
+
+@Test
+void testAll() {
+    Long numberOfAddress = addressDao.countAll();
+}
+----
+
+**Counting with a custom query:**
+
+[source,java]
+----
+@Autowired
+AddressDao addressDao;
+
+@Test
+void testCount() {
+    Long numberOfAddressInBudapest = addressDao.query()
+            .filterByCity(StringFilter.equalTo("Budapest"))
+            .orderBy(AddressAttribute.CITY) // or
+            //.orderByDescending(AddressAttribute.CITY)
+            .count();
+}
+----
 
 === Entity Updates
 
@@ -242,18 +320,21 @@ care of the persistence part of the operation. In order to persist our changes, 
 [source,java]
 ----
 @Autowired
-Address.AddressDao addressDao;
+AddressDao addressDao;
 
 @Test
 void testUpdate() {
-    Address address = addressDao.create(Address.builder()
+    Address address = addressDao.create(AddressForCreate.builder()
         // ...
         .build()
     );
 
     address.setCity("Oslo");
+    // in the database the city still "Budapest"
 
     address = addressDao.update(address);
+    // in the database now also "Oslo"
+
 }
 ----
 
@@ -271,15 +352,15 @@ Currently, we support two types of validation concepts:
 * `required` modifiers
 * type-based validations
 
-To understand how to use the `required` modifier, please check the xref:meta-jsl:05_entity.adoc#primitive-fields[Primitive Fields,window=_blank]
+To understand how to use the `required` modifier, please check the xref:meta-jsl:05_entity.adoc#primitive-field[Primitive Fields,window=_blank]
 section of our documentation
 
 **Example:**
 
 [source,jsl]
 ----
-type numeric PostalCode(precision = 5, scale = 0);
-type string String(min-size = 0, max-size = 250);
+type numeric PostalCode precision : 5 scale : 0;
+type string String min-size : 0  max-size : 250;
 
 entity Address {
     field required String street;
@@ -300,21 +381,21 @@ As a result, the following will hold true:
 [source,java]
 ----
 @Autowired
-Address.AddressDao addressDao;
+AddressDao addressDao;
 
 @Test
 void testValidation() {
-    // Will throw because street and city is missing
-    Address address1 = addressDao.create(Address.builder()
-        .withPostalCode(1490L)
+    // Will throw ValidationException because street and city is missing
+    Address address1 = addressDao.create(AddressForCreate.builder()
+        .withPostalCode(1490)
         .build()
     );
 
-    // Will throw because the postalCode attribute fails the precision rule defined on PostalCode
-    Address address2 = addressDao.create(Address.builder()
+    // Will throw ValidationException because the postalCode attribute fails the precision rule defined on PostalCode
+    Address address2 = addressDao.create(AddressForCreate.builder()
         .withCity("Budapest")
         .withStreet("Custom Street 2.")
-        .withPostalCode(467890L)
+        .withPostalCode(467890)
         .build()
     );
 }
@@ -328,7 +409,7 @@ entity we wish to delete.
 [source,java]
 ----
 @Autowired
-Address.AddressDao addressDao;
+AddressDao addressDao;
 
 @Test
 void testDelete() {
@@ -360,13 +441,13 @@ entity User {
 
 entity abstract Customer {
     field required Address address;
-    relation Order[] orders opposite customer;
+    relation Order[] orders opposite: customer;
 }
 
 entity Person extends Customer, User {
     field required String firstName;
     field required String lastName;
-    derived	String fullName => self.firstName + " " + self.lastName;
+    field String fullName <= self.firstName + " " + self.lastName;
 }
 ----
 
@@ -377,19 +458,22 @@ The corresponding `PersonDao` and `Person` Java class will inherit the members f
 [source,java]
 ----
 @Autowired
-Person.PersonDao personDao;
+PersonDao personDao;
 
 @Test
 void testInheritance() {
-    Person johnPerson = personDao.create(Person.builder()
-        .withEmail("john@doe.com")
-        .withAddress(Address.builder()
-            .withCity("Budapest")
-            .build()
-        ).build()
+    Person johnPerson = personDao.create(PersonForCreate.builder()
+            .withFirstName("John")
+            .withLastName("Doe")
+            .withEmail("john@doe.com")
+            .withAddress(AddressForCreate.builder()
+                    .withStreet("Rose")
+                    .withCity("Budapest")
+                    .build()
+            ).build()
     );
 
-    List<Order> ordersForJohn = personDao.getOrders(johnPerson);
+    List<Order> ordersForJohn = personDao.queryOrders(johnPerson).selectList();
 
     String city = johnPerson.getAddress().getCity();
 }
@@ -399,12 +483,56 @@ void testInheritance() {
 In this example you may notice that the list of Orders is queried through the `personDao`. The logic behind this will be
 explained in great detail in the next sections.
 
+=== AdaptTo
+You can get the ancestors of the Person entity if you need it. Use the `adaptTo(Class<T> target)` method.
+
+This method casts the actual element to the target class.
+
+For example :
+
+Each DAO has its own Identifier class, so if you want to use the CustomerDAO to retrieve a Person as a Customer, you'll need to adapt it.
+
+[source,java]
+----
+@Autowired
+AddressDao addressDao;
+
+@Autowired
+PersonDao personDao;
+
+@Autowired
+UserDao userDao;
+
+@Autowired
+CustomerDao customerDao;
+
+@Test
+void testAdaptTo() {
+
+    Optional<Customer> johnDoAsACustomer = customerDao.getById(johnPerson.adaptTo(Customer.class).identifier());
+    assertTrue(johnDoAsACustomer.isPresent());
+
+    Optional<User> johnDoAsAUser = userDao.getById(johnPerson.adaptTo(User.class).identifier());
+    assertTrue(johnDoAsAUser.isPresent());
+
+    // Always will be empty
+    Optional<Address> johnDoAsAAddres = addressDao.getById(johnPerson.adaptTo(Address.class).identifier());
+    assertEquals(Optional.empty(), johnDoAsAAddres);
+
+}
+----
+
+[IMPORTANT]
+Only use this method if there is a relation between the entities. This cast is a map between entities. It is up to you to decide how to use it correctly.
+
 == Abstract Entity
 
 The `abstract` modifier has the following effect on entities and DAOs:
 
 * Entities are **not** instantiable via Java code
 * Corresponding DAOs do not have a `.create(/* ... */)` method on them
+
+__ You can notice the generated DAO for the Customer entity does not contain the create method. __
 
 == Entity Members
 
@@ -413,7 +541,7 @@ The following members can be declared for each Entity:
 * fields
 * identifiers
 * relations
-* derived members
+* calculated members
 * queries
 
 === Fields
@@ -448,38 +576,36 @@ Managing the fields `status` and `orderItems` is done directly on the `Order` in
 [source,java]
 ----
 @Autowired
-Customer.CustomerDao customerDao;
+CustomerDao customerDao;
 
 @Autowired
-Product.ProductDao productDao;
+ProductDao productDao;
+
+ @Autowired
+OrderDao orderDao;
 
 @Test
 void testFields() {
-    Optional<Customer> johnCustomer = customerDao.getById(johnPerson.get__identifier());
+    Optional<Customer> johnCustomer = customerDao.getById(johnPerson.adaptTo(Customer.class).identifier());
 
-    Product chainsaw = productDao.create(Product.builder().withName("Master Chainsaw").withPrice(1500L).build());
+    Product butter = productDao.create(ProductForCreate.builder().withName("Master Butter").withPrice(2).build());
 
-    Order order = orderDao.create(Order.builder()
-        .withStatus(OrderStatus.OPEN)
-        .withCustomer(johnCustomer.get())
-        .withOrderItems(List.of(
-            OrderItem.builder()
-                .withAmount(50L)
-                .withProduct(chainsaw)
-                .build()
-            )
-        )
-        .build()
-    );
+    //Create reusable builder for OrderItem
+    OrderItemForCreateBuilder orderItemForCreateBuilder = OrderItemForCreate.builder().withAmount(50).withProduct(butter);
 
-    order.getOrderItems()
-        .add(OrderItem.builder()
-            .withProduct(butter)
-            .withAmount(500L)
-            .build()
-        );
+    //Create reusable builder for Order
+    OrderForCreateBuilder orderForCreateBuilder = OrderForCreate.builder()
+            .withStatus(OrderStatus.OPEN)
+            .withCustomer(johnCustomer.get());
+
+    // addTo an OrderItemForCreate to the OrderForCreate
+    Order order = orderDao.create(orderForCreateBuilder.addToOrderItems(orderItemForCreateBuilder.build()).build());
+
+    order.getOrderItems().get(0).setAmount(300);
 
     Order updatedOrder = orderDao.update(order);
+
+    assertEquals(300, updatedOrder.getOrderItems().get(0).getAmount());
 }
 ----
 
@@ -493,6 +619,8 @@ entity with a field, or fields which may contain multiple hundreds or thousands 
 
 In such cases it is advised to use "relations" instead.
 ====
+
+// TODO Deep copy explanation https://blackbelt.atlassian.net/browse/JNG-5269
 
 === Identifiers
 
@@ -509,7 +637,21 @@ entity User {
     identifier required Email email;
 }
 ----
+[source,java]
+----
 
+@Autowired
+UserDao userDao;
+
+@Test
+void testIdentifier() {
+
+    User user1 = userDao.create(UserForCreate.builder().withEmail("same@mail.com").build());
+    // Will throw ValidationException because the email is not unique
+    User user2 = userDao.create(UserForCreate.builder().withEmail("same@mail.com").build());
+
+}
+----
 In this scenario, every `User` will have different `email` attributes, enforced by the architecture.
 
 === Relations
@@ -531,13 +673,13 @@ One may consider relations as associations between entities.
 ----
 entity abstract Customer {
     field required Address address;
-    relation Order[] orders opposite customer;
+    relation Order[] orders opposite: customer;
 }
 
 entity Person extends Customer, User {
     field required String firstName;
     field required String lastName;
-    derived	String fullName => self.firstName + " " + self.lastName;
+    field String fullName <= self.firstName + " " + self.lastName;
 }
 ----
 
@@ -546,26 +688,36 @@ Based on the example above, the corresponding SDK code will be the following:
 [source,java]
 ----
 @Autowired
-Person.PersonDao personDao;
+PersonDao personDao;
 
 @Test
 void testRelations() {
-    Person johnPerson = personDao.create(Person.builder()
-        .withEmail("john@doe.com")
-        .withAddress(Address.builder()
-            .withCity("Budapest")
-            .build()
-        ).build()
+    Person johnPerson = personDao.create(PersonForCreate.builder()
+                    .withFirstName("John")
+                    .withLastName("Doe")
+                    .withEmail("john@doe.com")
+                    .withAddress(AddressForCreate.builder()
+                            .withCity("Budapest")
+                            .withStreet("Rose")
+                            .build()
+                    )
+                    .withOrders(List.of(/* list of Orders */))
+                    .build()
     );
 
-    List<Order> orders = personDao.getOrders(johnPerson);
     personDao.addOrders(johnPerson, List.of(/* ... */));
     personDao.removeOrders(johnPerson, List.of(/* ... */));
-    List<Order> ordersQueried = personDao.queryOrders(johnPerson).execute();
+    List<Order> ordersQueried = personDao.queryOrders(johnPerson).selectList();
 }
 ----
 
 As we can see, the `orders` relation can only be queried via the `Person` entity's `PersonDao`.
+
+==== Person vs PersonForCreate
+
+When creating, you must use a `PersonForCreate` instance. You can use `PersonForCreate.builder()`. This builder includes all the relations that the Person entity has, including the inherited ones. You can only set the association relation with an existing instance here. Composition fields, such an Address, require an `AddressForCreate` instance.
+
+After the creating you get a `Person` instance that only contains the fields and composition relations.
 
 The reason why the lifecycle is split for fields and relations is based on historical experience managing these two
 concepts.
@@ -589,7 +741,11 @@ entity OrderItem {
 }
 
 entity Customer {
-    relation OrderItem favouriteItem;
+    relation required OrderItem favouriteItem;
+    // ...
+}
+
+entity Person extends Customer, User {
     // ...
 }
 ----
@@ -599,33 +755,60 @@ Going with this setup the `CustomerDao` will contain the following methods (besi
 [source,java]
 ----
 @Autowired
-Customer.CustomerDao customerDao;
+PersonDao personDao;
+
+@Autowired
+OrderItemDao orderItemDao;
+
+@Autowired
+ProductDao productDao;
 
 @Test
 void testOneWay() {
-    Customer johnCustomer = customerDao.create(Customer.builder()
-        .withFirstName("John")
-        // ...
-        .build()
+
+    Product butter = productDao.create(ProductForCreate.builder().withName("Butter").withPrice(2).build());
+    Product chainsaw = productDao.create(ProductForCreate.builder().withName("Master Chainsaw").withPrice(1500).build());
+
+    OrderItem orderItem = orderItemDao.create(OrderItemForCreate.builder().withAmount(1).withProduct(chainsaw).build());
+
+    Person johnPerson = personDao.create(PersonForCreate.builder()
+            .withFirstName("John")
+            // ...
+            .build()
     );
 
-    // new CustomerDAO APIs:
-    OrderItem favouriteItem = customerDao.getFavouriteItem(johnCustomer);
-    customerDao.setFavouriteItem(johnCustomer, OrderItem.builder().withAmount(150L).build());
+    // new PersonDAO APIs:
+    Optional<OrderItem> favouriteItem = personDao.queryFavouriteItem(johnPerson); // Optional empty
+    personDao.setFavouriteItem(johnPerson, orderItem);
+    personDao.unsetFavouriteItem(johnPerson);
+    personDao.createFavouriteItem(
+            johnPerson,
+            OrderItemForCreate.builder().withAmount(150).withProduct(butter).build()
+    );
 }
 ----
+
+[IMPORTANT]
+====
+The `.setFavourite()` can only set existing Order elements.
+
+====
 
 **Two way:**
 
 [source,jsl]
 ----
-entity Customer {
-    relation Order[] orders opposite customer;
+entity abstract Customer {
+    relation Order[] orders opposite: customer;
+    // ...
+}
+
+entity Person extends Customer, User {
     // ...
 }
 
 entity Order {
-    relation required Customer customer opposite orders;
+    relation required Customer customer opposite: orders;
     // ...
 }
 ----
@@ -635,47 +818,49 @@ Modeling the two entities this way, the resulting DAO APIs are extended to conta
 [source,java]
 ----
 @Autowired
-Address.AddressDao addressDao;
+AddressDao addressDao;
 
 @Autowired
-Customer.CustomerDao customerDao;
+PersonDao personDao;
 
 @Autowired
-Order.OrderDao orderDao;
+OrderDao orderDao;
 
+@Autowired
+PoductDao productDao;
+
+@Test
 void testTwoWay() {
-    Address address1 = addressDao.create(Address.builder().withCity("Budapest").withCountry("Hungary").build());
-
-    Customer johnCustomer = customerDao.create(Customer.builder()
-        .withFirstName("John")
-        // ...
-        .build()
+    Product butter = productDao.create(ProductForCreate.builder().withName("Butter").withPrice(2).build());
+    Person johnPerson = personDao.create(PersonForCreate.builder()
+            .withFirstName("John")
+            .withLastName("Doe")
+            .withEmail("john@doe.com")
+            .withAddress(AddressForCreate.builder()
+                    .withCity("Budapest")
+                    .withStreet("Rose")
+                    .build()
+            ).build()
     );
 
-    // new CustomerDAO APIs:
-    List<Order> orders = customerDao.getOrders(johnCustomer);
-    customerDao.createOrders(johnCustomer, List.of(/* ... */));
-    customerDao.addOrders(johnCustomer, List.of(/* ... */));
-    customerDao.removeOrders(johnCustomer, List.of(/* ... */));
-    customerDao.queryOrders(johnCustomer.get()).execute();
-    List<Order> queriedOrders = customerDao.queryOrders(johnCustomer.get()).execute();
+    // new PersonDAO APIs:
+    personDao.createOrders(johnPerson, List.of(/* ... */));
+    personDao.addOrders(johnPerson, List.of(/* ... */));
+    personDao.removeOrders(johnPerson, List.of(/* ... */));
+    personDao.queryOrders(johnPerson).selectList();
+    List<Order> queriedOrders = personDao.queryOrders(johnPerson).selectList();
 
-    Order order = orderDao.create(Order.builder()
-        .withStatus(OrderStatus.OPEN)
-        .withCustomer(johnCustomer)
-        .withOrderItems(List.of(
-            OrderItem.builder()
-                .withAmount(50L)
-                .withProduct(chainsaw)
-                .build()
-            )
-        )
-        .build()
+    Order order = orderDao.create(OrderForCreate.builder()
+            .withStatus(OrderStatus.OPEN)
+            .withCustomer(johnPerson.adaptTo(Customer.class))
+            .build()
     );
+
+    orderDao.createOrderItems(order, List.of(OrderItemForCreate.builder().withAmount(50).withProduct(butter).build()));
 
     // new OrderDAO APIs:
-    Customer customerForOrder = orderDao.getCustomer(order);
-    orderDao.setCustomer(order, Customer.builder().withAddress(/* ... */).build());
+    Customer customerForOrder = orderDao.queryCustomer(order);
+    orderDao.setCustomer(order, customerForOrder);
 }
 ----
 
@@ -684,7 +869,7 @@ void testTwoWay() {
 [source,jsl]
 ----
 entity OrderItem {
-    relation required Product product opposite-add orderItems[];
+    relation required Product product opposite-add: orderItems[];
     // ...
 }
 
@@ -701,17 +886,17 @@ The resulting `OrderDao` API will contain the following additional methods:
 [source,java]
 ----
 @Autowired
-Product.ProductDao productDao;
+ProductDao productDao;
 
+@Test
 void testOppositeAdd() {
-    Product chainsaw = productDao.create(Product.builder().withName("Master Chainsaw").withPrice(1500L).build());
+    Product chainsaw = productDao.create(ProductForCreate.builder().withName("Master Chainsaw").withPrice(1500).build());
 
     // new ProductDAO APIs:
-    List<OrderItem> orderItems = productDao.getOrderItems(chainsaw);
     productDao.createOrderItems(chainsaw, List.of(/* ... */));
     productDao.addOrderItems(chainsaw, List.of(/* ... */));
     productDao.removeOrderItems(chainsaw, List.of(/* ... */));
-    List<OrderItem> queriedOrderItems = productDao.queryOrderItems(chainsaw).execute();
+    List<OrderItem> queriedOrderItems = productDao.queryOrderItems(chainsaw).selectList();
 }
 ----
 
@@ -730,7 +915,7 @@ entity Person {
 
 The following methods will be generated:
 
-* `Person getBestFriend(Person object)`
+* `Optional<Person> queryBestFriend(Person object)`
 * `void setBestFriend(Person object, Person relatedObject)`
 * `void unsetBestFriend(Person object)`
 
@@ -747,7 +932,7 @@ entity Person {
 
 The following methods will be generated:
 
-* `Animal getPet(Person object)`
+* `Animal queryPet(Person object)`
 * `void setPet(Person object, Animal relatedObject)`
 
 In case of `required` relations, DAOs will not contain an `unset` method.
@@ -765,23 +950,25 @@ entity Person {
 
 The following methods will be generated:
 
-* `List<Order> getOrders(Person object)`
-* `List<Order> createOrders(Person object, List.of(/* ... */))`
+* `List<Order> createOrders(Person object, List.of(/* OrderForCreate */))`
+* `Order createOrders(Person object, OrderForCreate relatedObject)`
 * `void addOrders(Person object, List.of(/* ... */))`
+* `void addOrders(Person object, Order relatedObject)`
 * `void removeOrders(Person object, List.of(/* ... */))`
+* `void removeOrders(Person object, Order relatedObject)`
 * `QueryCustomizer queryOrders(Person object)`
 
 The main difference between `createOrders` and `addOrders` is that `createOrders` explicitly creates not yet persisted
 entries, while `addOrders` throws an exception if any of them are not yet persisted.
 
-=== Derived members
+=== Calculated members
 
-Derived members are dynamic attributes on each entity. The purpose of them is to give developers means to define complex
+Calculated members are dynamic attributes on each entity. The purpose of them is to give developers means to define complex
 "data types" where values are calculated at runtime, rather than statically persisting them.
 
 [IMPORTANT]
 ====
-Derived values are computed at query time, only once. If you would like to "refresh" a derived value, you must persist your
+Calculated values are computed at query time, only once. If you would like to "refresh" a derived value, you must persist your
 instance state (if there are changes), and re-fetch it by e.g.: calling `getById()`, or `.query()` on a DAO.
 ====
 
@@ -792,7 +979,7 @@ instance state (if there are changes), and re-fetch it by e.g.: calling `getById
 entity Person extends Customer, User {
     field required String firstName;
     field required String lastName;
-    derived	String fullName => self.firstName + " " + self.lastName;
+    field String fullName <= self.firstName + " " + self.lastName;
 }
 ----
 
@@ -801,39 +988,87 @@ The `fullName` attribute's value is not persisted in the database, but calculate
 [source,java]
 ----
 @Autowired
-Person.PersonDao personDao;
+PersonDao personDao;
 
 @Test
-void testDerived() {
-    personDao.create(Person.builder()
-        .withFirstName("John")
-        .withLastName("Doe")
-        .withEmail("john@doe.com")
-        .withAddress(Address.builder()
-            .withCity("Budapest")
-            .build()
-        ).build()
+void testCalculatedMembers() {
+    personDao.create(PersonForCreate.builder()
+            .withFirstName("John")
+            .withLastName("Doe")
+            .withEmail("john@doe.com")
+            .withAddress(AddressForCreate.builder()
+                    .withCity("Budapest")
+                    .withStreet("Rose")
+                    .build()
+            ).build()
     );
 
     List<Person> persons = personDao.query()
-        .filterByEmail(StringFilter.equalTo("john@doe.com"))
-        .execute();
+            .filterByEmail(StringFilter.equalTo("john@doe.com"))
+            .selectList();
 
+    persons.get(0).setFirstName("Johny");
+    // the calculated member hasn't changed
     assertEquals(Optional.of("John Doe"), persons.get(0).getFullName());
+
+    // refresh person calculated fields
+    Person person = personDao.update(persons.get(0));
+    assertEquals(Optional.of("Johny Doe"), person.getFullName());
 }
 ----
 
-Derived members are not limited to primitive types!
+Calculated members are not limited to primitive types!
 
-You may find a detailed description of the expression syntax for derived members in the xref:meta-jsl:05_entity.adoc#derived-members[Derived members,window=_blank]
+You may find a detailed description of the expression syntax for calculated members in the xref:meta-jsl:05_entity.adoc#calculated-members[Calculated members,window=_blank]
 section of the JSL DSL documentation.
+
+=== Fetching
+
+You can influence the behavior of a relation. You have the flexibility to fetch a relation like a field.
+For more information, you can refer to the xref:meta-jsl:05_entity.adoc#fetching-strategy[Fetching strategy,window=_blank] section.
+
+**For example:**
+[source,jsl]
+----
+entity OrderItem {
+	relation required Product product opposite-add: orderItems[] eager: true;
+	field required Integer amount;
+	field String productName <= self.product.name;
+	field Integer price <= self.amount * self.product.price;
+}
+
+entity Product {
+	identifier required String name;
+	field required Integer price;
+}
+----
+[source, java]
+----
+
+@Autowired
+ProductDao productDao;
+
+@Autowired
+OrderItemDao orderItemDao;
+
+@Test
+public void testFetch() {
+
+    Product product = productDao.create(ProductForCreate.builder().withName("Butter").withPrice(3).build());
+
+    OrderItem orderItem = orderItemDao.create(OrderItemForCreate.builder().withAmount(20).withProduct(ProductForCreate.builderFrom(product).build()).build());
+
+    assertEquals("Butter", orderItem.getProduct().getName());
+}
+----
+
 
 === Instance Query
 
 Queries are dynamic capabilities of Entities. They let the modeler create dynamic functions/methods which can return values
 for entity instances at runtime.
 
-Main differences distinguishing `derived` members from `queries` from an SDK point of view:
+Main differences distinguishing `calculated` members from `queries` from an SDK point of view:
 
 [options="header"]
 |======================================================================
@@ -845,7 +1080,7 @@ Main differences distinguishing `derived` members from `queries` from an SDK poi
 | Can have input parameters             | `false`   | `true`
 |======================================================================
 
-__* Derived values can be "refreshed" by re-query-ing the entity instance__
+__* Calculated values can be "refreshed" by re-query-ing the entity instance__
 
 As stated in the table above, instance queries are defined as entity members, however, from a technical point of view
 the `query` is generated on DAOs, and not as methods/fields on entities.
@@ -860,22 +1095,24 @@ of the entity on which we defined the query.
 [source,jsl]
 ----
 entity Lead {
-    field Integer value = 100000;
-    relation required SalesPerson salesPerson opposite leads;
+    field Integer value default: 100000;
+    relation required SalesPerson salesPerson opposite: leads;
     // ...
 }
 
 entity SalesPerson extends Person {
-    relation Lead[] leads opposite salesPerson;
-    query Lead[] leadsOver(Integer limit = 100) => self.leads!filter(lead | lead.value > limit);
-    derived Lead[] leadsOver10 => self.leadsOver(limit = 10);
+    relation Lead[] leads opposite: salesPerson;
+    relation Lead[] leadsOver10 <= self.leadsOver(limit = 10);
     // ...
 }
+
+query Lead[] leadsOver(Integer limit = 100) on SalesPerson <= self.leads.filter(lead | lead.value > limit);
+
 ----
 
 One of the many neat aspects of queries is the ability for them to be composed into other entity members.
 
-In the example above, we should notice the use of the `derived` field `leadsOver10` utilizing the `leadsOver` query.
+In the example above, we should notice the use of the `calculated` field `leadsOver10` utilizing the `leadsOver` query.
 
 The corresponding Java SDK should look like the following:
 
@@ -883,33 +1120,40 @@ The corresponding Java SDK should look like the following:
 ----
 
 @Autowired
-SalesPerson.SalesPersonDao salesPersonDao;
+SalesPersonDao salesPersonDao;
 
 @Test
 void testQuery() {
-    SalesPerson createdSalesPerson = salesPersonDao
-        .create(SalesPerson.builder()
+    SalesPerson createdSalesPerson = salesPersonDao.create(SalesPersonForCreate.builder()
             .withFirstName("Super")
             .withLastName("Person")
+            .withEmail("super.person@mail.com")
+            .withAddress(AddressForCreate.builder().withStreet("Rose").withCity("Budapest").build())
             .build()
-        );
+    );
 
     List<Lead> leadsOver = salesPersonDao
-        .queryLeadsOver(createdSalesPerson, _SalesPerson_leadsOver_Parameters.builder()
-            .withLimit(200) // explicit definition of "limit" to have value of 200 instead of the default 100
-            .build()
-        )
-        .execute();
+            .queryLeadsOver(createdSalesPerson, SalesPersonLeadsOverParameter.builder()
+                    .withLimit(200) // explicit definition of "limit" to have value of 200 instead of the default 100
+                    .build()
+            )
+            .selectList();
 
-    List<Lead> leadsOver10 = salesPersonDao.getLeadsOver10(createdSalesPerson);
+    List<Lead> leadsOver10 = salesPersonDao.queryLeadsOver10(createdSalesPerson).selectList();
 }
 ----
+
+Queries return type depend on the following query types in JSL:
+
+  *  Primitive queries will return the primitive type representation.
+  *  Single-entity queries will return an Optional within the Entity class.
+  *  List-entity queries will return a QueryCustomizer.
 
 == Static Query
 
 Since static queries are defined on a root level of our models, they are considered special. They cannot be directly tied
-to entities, therefore they cannot be generated on entity prefixes/namespaces (e.g.: `Lead.LeadDao`). Every static query
-defined in our model will manifest a dedicated DAO (e.g.: `TotalNumberOfLeads.TotalNumberOfLeadsDao`).
+to entities, therefore they cannot be generated on entity prefixes/namespaces (e.g.: `LeadDao`). Every static query
+defined in our model will manifest a dedicated DAO (e.g.: `TotalNumberOfLeadsDao`).
 
 **Example:**
 
@@ -917,11 +1161,11 @@ defined in our model will manifest a dedicated DAO (e.g.: `TotalNumberOfLeads.To
 ----
 model QueryModel;
 
-type numeric Integer(precision = 9, scale = 0);
+type numeric Integer precision : 9 scale : 0;
 
-query Integer totalNumberOfLeads() => Lead!size();
-query Lead[] rootAllLeadsBetween(Integer min = 0, Integer max = 100) => Lead!filter(l | l.value > min and  l.value < max);
-query Integer rootCountAllLeadsBetween(Integer min = 0, Integer max = 100) => Lead!filter(l | l.value > min and  l.value < max)!size();
+query Integer totalNumberOfLeads() <= Lead!all()!size();
+query Lead[] rootAllLeadsBetween(Integer min = 0, Integer max = 100) <= Lead!filter(l | l.value > min and  l.value < max);
+query Integer rootCountAllLeadsBetween(Integer min = 0, Integer max = 100) <= Lead!filter(l | l.value > min and  l.value < max)!size();
 
 entity Lead {
 	field Integer value;
@@ -932,22 +1176,22 @@ Depending on the return types, and the existence or absence of parameters, the g
 
 === Parameterless Static Query
 
-Parameterless static queries are generated on their corresponding dedicated DAOs as methods with a prefix of "get".
+Parameterless static queries are generated in their corresponding dedicated DAOs. If the return type is not a list, they contain an `.selectOne()` or `selectValue()` method otherwise, they contain a `.query()` method.
 
 [source,java]
 ----
 @Autowired
-TotalNumberOfLeads.TotalNumberOfLeadsDao totalNumberOfLeadsDao;
+TotalNumberOfLeadsDao totalNumberOfLeadsDao;
 
 @Autowired
-Lead.LeadDao leadDao;
+LeadDao leadDao;
 
 @Test
 public void testStaticQuery() {
-    leadDao.create(Lead.builder().withValue(50).build());
-    leadDao.create(Lead.builder().withValue(175).build());
+    leadDao.create(LeadForCreate.builder().withValue(50).build());
+    leadDao.create(LeadForCreate.builder().withValue(175).build());
 
-    assertEquals(2, totalNumberOfLeadsDao.getTotalNumberOfLeads());
+    assertEquals(2, totalNumberOfLeadsDao.selectValue());
 }
 ----
 
@@ -957,38 +1201,39 @@ Compared to parameterless static queries, the generated Java methods differ base
 
 Methods for queries returning:
 
-* Collections: start with "search", and parameters can be set on the chained `.execute(/* ... */)` method.
-* Single references, or primitives: start with "get", and parameters can be set on the same method.
+* Collections start with "query", and parameters can be set on them. Since queries are builders, we need to call the `.selectList()` or `.selectOne()` method to retrieve the actual results.
+* Single references, or primitives: contain an `.selectOne()` or `.selectValue()`, and parameters can be set on the same method.
 
 [source,java]
 ----
 @Autowired
-RootAllLeadsBetween.RootAllLeadsBetweenDao rootAllLeadsBetweenDao;
+RootAllLeadsBetweenDao rootAllLeadsBetweenDao;
 
 @Autowired
-RootCountAllLeadsBetween.RootCountAllLeadsBetweenDao rootCountAllLeadsBetweenDao;
+RootCountAllLeadsBetweenDao rootCountAllLeadsBetweenDao;
 
 @Autowired
-Lead.LeadDao leadDao;
+LeadDao leadDao;
 
 @Test
 public void testStaticQuery() {
-    leadDao.create(Lead.builder().withValue(50).build());
-    leadDao.create(Lead.builder().withValue(175).build());
+    leadDao.create(LeadForCreate.builder().withValue(50).build());
+    leadDao.create(LeadForCreate.builder().withValue(175).build());
 
-    List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.searchRootAllLeadsBetween()
-        .execute(_QueryModel_rootAllLeadsBetween_Parameters.builder()
-            .withMax(80)
-            .withMin(10)
-            .build()
-        );
+    List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.query(
+                    RootAllLeadsBetweenParameter.builder()
+                            .withMax(80)
+                            .withMin(10)
+                            .build())
+            .selectList();
+
     assertEquals(1, rootAllLeadsBetween.size());
     assertEquals(Optional.of(50), rootAllLeadsBetween.get(0).getValue());
 
-    Integer rootCountAllLeadsBetween = rootCountAllLeadsBetweenDao.getRootCountAllLeadsBetween(_QueryModel_rootCountAllLeadsBetween_Parameters.builder()
-        .withMin(10)
-        .withMax(80)
-        .build()
+    Integer rootCountAllLeadsBetween = rootCountAllLeadsBetweenDao.selectValue(RootCountAllLeadsBetweenParameter.builder()
+            .withMin(10)
+            .withMax(80)
+            .build()
     );
 
     assertEquals(1, rootCountAllLeadsBetween);
@@ -1003,18 +1248,16 @@ filter and paging capabilities as traditional queries have.
 [source,java]
 ----
 @Autowired
-RootAllLeadsBetween.RootAllLeadsBetweenDao rootAllLeadsBetweenDao;
+RootAllLeadsBetweenDao rootAllLeadsBetweenDao;
 
 @Test
 public void testStaticQuery() {
     // ...
 
-    List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.searchRootAllLeadsBetween()
-        .limit(25) // additionl limit
-        .orderBy(Lead.Attribute.VALUE) // additional ordering
-        .execute(_QueryModel_rootAllLeadsBetween_Parameters.builder()
-            .withMax(80)
-            .build()
-        );
+    List<Lead> rootAllLeadsBetween = rootAllLeadsBetweenDao.query(RootAllLeadsBetweenParameter.builder()
+                    .withMax(80)
+                    .build())
+            .orderBy(LeadAttribute.VALUE) // additional ordering
+            .selectList(20); // additionl limit
 }
 ----
