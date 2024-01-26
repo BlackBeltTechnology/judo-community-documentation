@@ -157,7 +157,7 @@ dependencies / plugins can be added to any other Java project.
 
         <dependency>
             <groupId>hu.blackbelt.judo.runtime</groupId>
-            <artifactId>judo-runtime-core-bootstrap-hsqldb</artifactId> <!-- Using HSQL for the sake of the demo -->
+            <artifactId>judo-runtime-core-guice-hsqldb</artifactId> <!-- Using HSQL for the sake of the demo -->
             <version>${judo-runtime-core-version}</version>
         </dependency>
 
@@ -185,7 +185,7 @@ dependencies / plugins can be added to any other Java project.
 
 ==== Database driver
 
-In this example we are pulling in the dependency `judo-runtime-core-bootstrap-hsqldb` which means that our `DAO`-s will
+In this example we are pulling in the dependency `judo-runtime-core-guice-hsqldb` which means that our `DAO`-s will
 connect to a HSQL DB instance which will be launched by our application (see Java code below).
 
 [NOTE]
@@ -230,9 +230,9 @@ package my.test;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import hu.blackbelt.judo.runtime.core.bootstrap.JudoDefaultModule;
-import hu.blackbelt.judo.runtime.core.bootstrap.JudoModelLoader;
-import hu.blackbelt.judo.runtime.core.bootstrap.dao.rdbms.hsqldb.JudoHsqldbModules;
+import hu.blackbelt.judo.runtime.core.guice.JudoDefaultModule;
+import hu.blackbelt.judo.runtime.core.guice.JudoModelLoader;
+import hu.blackbelt.judo.runtime.core.guice.dao.rdbms.hsqldb.JudoHsqldbModules;
 import hu.blackbelt.judo.runtime.core.dao.rdbms.hsqldb.HsqldbDialect;
 import my.test.test.guice.test.TestDaoModules;
 import my.test.test.sdk.test.test.Person;
