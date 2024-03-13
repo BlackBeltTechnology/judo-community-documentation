@@ -24,7 +24,7 @@
         <npm-version>9.1.1</npm-version>
 
         <judo-meta-jsl-version>1.0.3.20240311_144214_3aa34a27_develop</judo-meta-jsl-version>
-        <judo-tatami-jsl-version>1.1.4.20240312_040639_98f31225_develop</judo-tatami-jsl-version>
+        <judo-tatami-jsl-version>1.1.4.20240313_041925_d4db8010_develop</judo-tatami-jsl-version>
     </properties>
 
     <dependencies>
