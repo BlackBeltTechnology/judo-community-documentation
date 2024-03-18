@@ -83,7 +83,7 @@ dependencies / plugins can be added to any other Java project.
                     <execution>
                         <id>generate-models</id>
                         <goals>
-                            <goal>parser-workflow</goal>
+                            <goal>default-model-workflow</goal>
                         </goals>
                         <phase>generate-sources</phase>
                     </execution>
@@ -91,8 +91,6 @@ dependencies / plugins can be added to any other Java project.
                 <configuration>
                     <sources>${basedir}/src/main/resources/model</sources>
                     <destination>${basedir}/target/generated-sources/model</destination>
-                    <sdkPackagePrefix>my.test</sdkPackagePrefix>
-                    <generateSdkGuice>true</generateSdkGuice>
                     <saveModels>true</saveModels>
                 </configuration>
             </plugin>
