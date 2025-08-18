@@ -24,7 +24,7 @@
         <npm-version>9.1.1</npm-version>
 
         <judo-meta-jsl-version>1.0.3.20250818_013955_f4594b01_feature_JNG_6322_Minimiize_Karaf_Size</judo-meta-jsl-version>
-        <judo-tatami-jsl-version>1.1.4.20250815_042235_bcc3cc6d_develop</judo-tatami-jsl-version>
+        <judo-tatami-jsl-version>1.1.4.20250818_130818_7e4b5e07_feature_JNG_6322_Minimiize_Karaf_Size</judo-tatami-jsl-version>
     </properties>
 
     <dependencies>
