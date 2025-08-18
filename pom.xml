@@ -23,7 +23,7 @@
         <node-version>v18.12.1</node-version>
         <npm-version>9.1.1</npm-version>
 
-        <judo-meta-jsl-version>1.0.3.20250806_072406_024a66f5_develop</judo-meta-jsl-version>
+        <judo-meta-jsl-version>1.0.3.20250818_013955_f4594b01_feature_JNG_6322_Minimiize_Karaf_Size</judo-meta-jsl-version>
         <judo-tatami-jsl-version>1.1.4.20250815_042235_bcc3cc6d_develop</judo-tatami-jsl-version>
     </properties>
 
