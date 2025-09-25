@@ -1,10 +1,10 @@
-name: JUDO Documentation Develop
+name: JUDO Documentation Release
 
 on:
   push:
-    branches: [develop]
+    branches: [master]
   pull_request:
-    branches: [develop]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
@@ -99,48 +99,48 @@ jobs:
         -Prelease-judong \
         deploy
 
+      # Phase 2 - Build and deploy to maven central
+    - name: 🎁 Deploy with Maven (central)
+      run: |-
+        ./mvnw -B -Dstyle.color=always \
+        -Drevision=${{ steps.version.outputs.version }} \
+        -DdeployOnly \
+        -P"release-central,sign-artifacts,-verify-feature" \
+        -Dmaven.test.skip=true \
+        deploy
+
 ##########################
 # MAVEN BUILD END
 ##########################
 
     - name: Auth
-      if: |-
-        ${{ always() && startsWith(github.head_ref, 'develop') && job.status == 'success' }}
       uses: google-github-actions/auth@v1
       with:
         credentials_json: ${{ secrets.JUDO_DOCUMENTATION_GCP }}
 
     - name: Upload
-      if: |-
-        ${{ always() && startsWith(github.head_ref, 'develop') && job.status == 'success' }}
       uses: google-github-actions/upload-cloud-storage@v1
       with:
         path: build/
         parent: false
-        destination: judo-develop-documentation
+        destination: judo-community-documentation
         concurrency: 10
 
     - name: create-json
-      if: |-
-        ${{ always() && startsWith(github.head_ref, 'develop') && job.status == 'success' }}
       uses: jsdaniell/create-json@1.1.2
       with:
         name: gcp-token.json
         json: ${{ secrets.JUDO_DOCUMENTATION_GCP }}
 
     - name: Set up Cloud SDK
-      if: |-
-        ${{ always() && startsWith(github.head_ref, 'develop') && job.status == 'success' }}
       uses: google-github-actions/setup-gcloud@v1
       with:
         version: '>= 363.0.0'
 
     - name: set mainfile in bucket
-      if: |-
-        ${{ always() && startsWith(github.head_ref, 'develop') && job.status == 'success' }}
       run: |-
         gcloud auth activate-service-account --key-file=gcp-token.json
-        gsutil web set -m index.html gs://judo-develop-documentation
+        gsutil web set -m index.html gs://judo-community-documentation
 
     - name: 📌 Create version tag
       uses: actions/github-script@v5
@@ -162,7 +162,7 @@ jobs:
       with:
         toTag: v${{ steps.version.outputs.version }}
 
-    - name: 🎤 Create message
+    - name: 📖 Create release
       uses: ncipollo/release-action@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -173,7 +173,7 @@ jobs:
         draft: false
         prerelease: true
 
-    - name: Create message
+    - name: 🎤 Create message
       id: message
       if: ${{ always() }}
       run: |-
